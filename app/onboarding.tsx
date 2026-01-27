@@ -194,7 +194,7 @@ export default function Onboarding() {
                       units === "metric" && styles.optionButtonTextActive,
                     ]}
                   >
-                    Metric
+                    Metric (cm/kg)
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -210,7 +210,7 @@ export default function Onboarding() {
                       units === "imperial" && styles.optionButtonTextActive,
                     ]}
                   >
-                    Imperial
+                    Imperial (in/lbs)
                   </Text>
                 </TouchableOpacity>
               </View>
