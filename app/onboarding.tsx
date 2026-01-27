@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
-import { ArrowRight, X, Plus } from "lucide-react-native";
+import { ArrowRight, X, Plus, ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
 import {
+  Keyboard,
   ScrollView,
   StyleSheet,
   Text,
@@ -65,6 +66,14 @@ export default function Onboarding() {
     router.replace("/dashboard");
   };
 
+  const handleBack = () => {
+    const stepOrder: Step[] = ["welcome", "stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "summary"];
+    const currentIndex = stepOrder.indexOf(step);
+    if (currentIndex > 0) {
+      setStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
   const toggleMacro = (macro: TrackedMacro) => {
     setTrackedMacros((prev) =>
       prev.includes(macro)
@@ -85,6 +94,7 @@ export default function Onboarding() {
     if (customAllergy.trim() && !allergies.includes(customAllergy.trim())) {
       setAllergies((prev) => [...prev, customAllergy.trim()]);
       setCustomAllergy("");
+      Keyboard.dismiss();
     }
   };
 
@@ -126,13 +136,15 @@ export default function Onboarding() {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => setStep("stats")}
-        >
-          <Text style={styles.primaryButtonText}>Get Started</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setStep("stats")}
+          >
+            <Text style={styles.primaryButtonText}>Get Started</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -146,6 +158,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Your Stats</Text>
           <Text style={styles.subtitle}>We need some basic information</Text>
@@ -265,20 +280,20 @@ export default function Onboarding() {
           </View>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}
-          onPress={() => isValid && setStep("region")}
-          disabled={!isValid}
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}
+            onPress={() => isValid && setStep("region")}
+            disabled={!isValid}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     );
   }
@@ -295,6 +310,9 @@ export default function Onboarding() {
 
     return (
       <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Your Region</Text>
           <Text style={styles.subtitle}>This helps personalize your experience</Text>
@@ -320,30 +338,20 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => setStep("allergies")}
-          >
-            <Text style={styles.skipButtonText}>Skip for now</Text>
-          </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[styles.primaryButton, !region && styles.primaryButtonDisabled]}
             onPress={() => region && setStep("allergies")}
             disabled={!region}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <ArrowRight color="#fff" size={20} />
+            <ArrowRight color="#000" size={20} />
           </TouchableOpacity>
         </View>
       </View>
@@ -366,6 +374,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Allergies</Text>
           <Text style={styles.subtitle}>Help us keep you safe</Text>
@@ -402,13 +413,15 @@ export default function Onboarding() {
                   onChangeText={setCustomAllergy}
                   placeholder="Enter allergy"
                   placeholderTextColor="#666"
+                  returnKeyType="done"
                   onSubmitEditing={addCustomAllergy}
                 />
                 <TouchableOpacity
-                  style={styles.addButton}
+                  style={[styles.addButton, !customAllergy.trim() && styles.addButtonDisabled]}
                   onPress={addCustomAllergy}
+                  disabled={!customAllergy.trim()}
                 >
-                  <Plus color="#fff" size={20} />
+                  <Plus color="#000" size={20} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -423,7 +436,7 @@ export default function Onboarding() {
                       <View key={allergy} style={styles.allergyTag}>
                         <Text style={styles.allergyTagText}>{allergy}</Text>
                         <TouchableOpacity onPress={() => removeAllergy(allergy)}>
-                          <X color="#fff" size={16} />
+                          <X color="#000" size={14} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -431,29 +444,19 @@ export default function Onboarding() {
               </View>
             )}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => setStep("dietary")}
-          >
-            <Text style={styles.skipButtonText}>Skip for now</Text>
-          </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => setStep("dietary")}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <ArrowRight color="#fff" size={20} />
+            <ArrowRight color="#000" size={20} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -474,6 +477,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Dietary Preference</Text>
           <Text style={styles.subtitle}>How do you like to eat?</Text>
@@ -507,29 +513,19 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => setStep("activity")}
-          >
-            <Text style={styles.skipButtonText}>Skip for now</Text>
-          </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => setStep("activity")}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <ArrowRight color="#fff" size={20} />
+            <ArrowRight color="#000" size={20} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -547,6 +543,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Activity Level</Text>
           <Text style={styles.subtitle}>How often do you train?</Text>
@@ -580,23 +579,21 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => setStep("goal")}
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setStep("goal")}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     );
   }
@@ -610,6 +607,9 @@ export default function Onboarding() {
 
     return (
       <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Your Goal</Text>
           <Text style={styles.subtitle}>What do you want to achieve?</Text>
@@ -643,20 +643,18 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("macros")}>
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("macros")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -672,6 +670,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Track Macros</Text>
           <Text style={styles.subtitle}>Selected macros will be tracked in your dashboard</Text>
@@ -705,24 +706,22 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.primaryButton, trackedMacros.length === 0 && styles.primaryButtonDisabled]}
-          onPress={() => setStep("premium")}
-          disabled={trackedMacros.length === 0}
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.primaryButton, trackedMacros.length === 0 && styles.primaryButtonDisabled]}
+            onPress={() => setStep("premium")}
+            disabled={trackedMacros.length === 0}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     );
   }
@@ -730,6 +729,9 @@ export default function Onboarding() {
   if (step === "premium") {
     return (
       <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Go Premium</Text>
           <Text style={styles.subtitle}>Unlock advanced features</Text>
@@ -777,21 +779,20 @@ export default function Onboarding() {
           </View>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => {
-            setIsPremium(false);
-            setStep("summary");
-          }}
-        >
-          <Text style={styles.skipButtonText}>Skip for now</Text>
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              setIsPremium(false);
+              setStep("summary");
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Continue without Premium</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -814,6 +815,9 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Your Profile</Text>
           <Text style={styles.subtitle}>Here&apos;s what we&apos;ve learned about you</Text>
@@ -893,28 +897,26 @@ export default function Onboarding() {
 
             {isPremium && (
               <View style={[styles.summaryCard, styles.summaryCardPremium]}>
-                <Text style={styles.summaryCardTitle}>Premium</Text>
+                <Text style={[styles.summaryCardTitle, { color: "#000" }]}>Premium</Text>
                 <Text style={styles.summaryPremiumText}>7-day free trial active</Text>
               </View>
             )}
           </View>
-
-          <Text style={styles.refineNote}>We&apos;ll refine this as you log more data.</Text>
         </View>
 
-        {showStepCounter && (
-          <View style={styles.stepCounter}>
+        <View style={styles.footer}>
+          <Text style={styles.refineNote}>We&apos;ll refine this as you log more data.</Text>
+          {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleComplete}
-        >
-          <Text style={styles.primaryButtonText}>Start Tracking</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleComplete}
+          >
+            <Text style={styles.primaryButtonText}>Start Tracking</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     );
   }
@@ -934,7 +936,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    paddingTop: 80,
+    paddingTop: 64,
+  },
+  backButton: {
+    position: "absolute" as const,
+    top: 48,
+    left: 24,
+    zIndex: 10,
+    padding: 8,
   },
   welcomeContent: {
     flex: 1,
@@ -1076,6 +1085,9 @@ const styles = StyleSheet.create({
     width: 52,
     alignItems: "center",
     justifyContent: "center",
+  },
+  addButtonDisabled: {
+    opacity: 0.3,
   },
   selectedAllergies: {
     gap: 12,
@@ -1225,27 +1237,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     textAlign: "center",
-    marginTop: 24,
+    marginBottom: 12,
     fontStyle: "italic",
   },
   infoNote: {
     fontSize: 12,
     color: "#666",
     textAlign: "center",
-    marginTop: 8,
-  },
-  stepCounter: {
-    alignItems: "center",
-    paddingVertical: 12,
+    marginBottom: 8,
   },
   stepCounterText: {
     fontSize: 12,
     color: "#666",
     fontWeight: "500",
+    textAlign: "center",
+    marginBottom: 12,
   },
-  buttonGroup: {
-    gap: 12,
+  footer: {
     padding: 24,
+    paddingTop: 12,
   },
   primaryButton: {
     flexDirection: "row",
@@ -1253,8 +1263,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#fff",
-    margin: 24,
-    padding: 18,
+    padding: 14,
     borderRadius: 12,
   },
   primaryButtonDisabled: {
@@ -1265,13 +1274,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000",
   },
-  skipButton: {
+  secondaryButton: {
     alignItems: "center",
-    padding: 18,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: "#1a1a1a",
   },
-  skipButtonText: {
+  secondaryButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#999",
+    color: "#fff",
   },
 });
