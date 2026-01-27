@@ -1,8 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as z from "zod";
 import { createTRPCRouter, publicProcedure } from "../create-context";
-
-const USERS_KEY = "users_db";
 
 interface User {
   id: string;
@@ -12,18 +9,7 @@ interface User {
   createdAt: number;
 }
 
-const getUsers = async (): Promise<User[]> => {
-  try {
-    const users = await AsyncStorage.getItem(USERS_KEY);
-    return users ? JSON.parse(users) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveUsers = async (users: User[]) => {
-  await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
+const usersStore: User[] = [];
 
 export const authRouter = createTRPCRouter({
   signup: publicProcedure
@@ -35,9 +21,7 @@ export const authRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const users = await getUsers();
-      
-      const existingUser = users.find((u) => u.email === input.email);
+      const existingUser = usersStore.find((u) => u.email === input.email);
       if (existingUser) {
         throw new Error("Email already registered");
       }
@@ -50,8 +34,7 @@ export const authRouter = createTRPCRouter({
         createdAt: Date.now(),
       };
 
-      users.push(newUser);
-      await saveUsers(users);
+      usersStore.push(newUser);
 
       return {
         id: newUser.id,
@@ -69,9 +52,7 @@ export const authRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const users = await getUsers();
-      
-      const user = users.find(
+      const user = usersStore.find(
         (u) => u.email === input.email && u.password === input.password
       );
 
