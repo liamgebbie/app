@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ArrowRight, X, Plus, ChevronLeft, HelpCircle } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Keyboard,
   ScrollView,
@@ -14,11 +14,10 @@ import { useUser } from "@/contexts/UserContext";
 import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
 import { calculateBMI, getBMICategory, calculateProjectedWeight, calculateBMR, calculateTDEE, calculateTargetCalories } from "@/utils/calculations";
 
-type Step = "welcome" | "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "premiumUpsell" | "summary";
+type Step = "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "premiumUpsell" | "summary";
 
 const TOTAL_STEPS = 9;
 const STEP_MAP: Record<Step, number> = {
-  welcome: 0,
   stats: 1,
   region: 2,
   allergies: 3,
@@ -33,8 +32,14 @@ const STEP_MAP: Record<Step, number> = {
 
 export default function Onboarding() {
   const router = useRouter();
-  const { createProfile } = useUser();
-  const [step, setStep] = useState<Step>("welcome");
+  const { createProfile, authToken } = useUser();
+  const [step, setStep] = useState<Step>("stats");
+
+  useEffect(() => {
+    if (!authToken) {
+      router.replace("/");
+    }
+  }, [authToken, router]);
 
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
@@ -75,10 +80,12 @@ export default function Onboarding() {
   };
 
   const handleBack = () => {
-    const stepOrder: Step[] = ["welcome", "stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "premiumUpsell", "summary"];
+    const stepOrder: Step[] = ["stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "premiumUpsell", "summary"];
     const currentIndex = stepOrder.indexOf(step);
     if (currentIndex > 0) {
       setStep(stepOrder[currentIndex - 1]);
+    } else {
+      router.back();
     }
   };
 
@@ -113,49 +120,7 @@ export default function Onboarding() {
   const currentStepNumber = STEP_MAP[step];
   const showStepCounter = currentStepNumber > 0;
 
-  if (step === "welcome") {
-    return (
-      <View style={styles.container}>
-        <View style={styles.welcomeContent}>
-          <View style={styles.welcomeHeader}>
-            <Text style={styles.title}>Welcome</Text>
-            <Text style={styles.subtitle}>
-              AI-powered calorie tracking
-            </Text>
-          </View>
 
-          <View style={styles.featureList}>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Track calories and macros effortlessly</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Log food with natural language</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Get personalized AI insights</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Monitor your progress over time</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => setStep("stats")}
-          >
-            <Text style={styles.primaryButtonText}>Get Started</Text>
-            <ArrowRight color="#000" size={20} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   if (step === "stats") {
     const isValid = age && height && weight;

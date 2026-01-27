@@ -12,11 +12,13 @@ import {
 const USER_PROFILE_KEY = "user_profile";
 const FOOD_LOGS_KEY = "food_logs";
 const WEIGHT_LOGS_KEY = "weight_logs";
+const AUTH_TOKEN_KEY = "auth_token";
 
 export const [UserProvider, useUser] = createContextHook(() => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -25,20 +27,27 @@ export const [UserProvider, useUser] = createContextHook(() => {
 
   const loadData = async () => {
     try {
-      const [profileData, logsData, weightData] = await Promise.all([
+      const [profileData, logsData, weightData, token] = await Promise.all([
         AsyncStorage.getItem(USER_PROFILE_KEY),
         AsyncStorage.getItem(FOOD_LOGS_KEY),
         AsyncStorage.getItem(WEIGHT_LOGS_KEY),
+        AsyncStorage.getItem(AUTH_TOKEN_KEY),
       ]);
 
       if (profileData) setProfile(JSON.parse(profileData));
       if (logsData) setFoodLogs(JSON.parse(logsData));
       if (weightData) setWeightLogs(JSON.parse(weightData));
+      if (token) setAuthToken(token);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const setAuthData = async (token: string, userId: string, email: string, dateOfBirth: string) => {
+    setAuthToken(token);
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
   };
 
   const createProfile = async (data: Omit<UserProfile, "tdee" | "targetCalories" | "targetProtein" | "targetCarbs" | "targetFats" | "targetSugars">) => {
@@ -140,10 +149,12 @@ export const [UserProvider, useUser] = createContextHook(() => {
         AsyncStorage.removeItem(USER_PROFILE_KEY),
         AsyncStorage.removeItem(FOOD_LOGS_KEY),
         AsyncStorage.removeItem(WEIGHT_LOGS_KEY),
+        AsyncStorage.removeItem(AUTH_TOKEN_KEY),
       ]);
       setProfile(null);
       setFoodLogs([]);
       setWeightLogs([]);
+      setAuthToken(null);
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -153,7 +164,9 @@ export const [UserProvider, useUser] = createContextHook(() => {
     profile,
     foodLogs,
     weightLogs,
+    authToken,
     isLoading,
+    setAuthData,
     createProfile,
     addFoodLog,
     deleteFoodLog,
