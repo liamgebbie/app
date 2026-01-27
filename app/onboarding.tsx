@@ -1462,7 +1462,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   upsellFreeTrialText: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "800",
     color: "#000",
     letterSpacing: 1.5,
@@ -1473,7 +1473,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   upsellPrice: {
-    fontSize: 36,
+    fontSize: 24,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 4,
