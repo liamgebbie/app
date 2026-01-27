@@ -57,7 +57,13 @@ export default function Index() {
       return;
     }
 
-    router.push("/onboarding");
+    await setAuthData("dummy-token", "dummy-user-id", email, "1990-01-01");
+    
+    if (profile) {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/onboarding");
+    }
   };
 
   const handleSignup = async () => {
