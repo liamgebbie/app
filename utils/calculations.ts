@@ -61,3 +61,23 @@ export function calculateMacros(
     sugars: sugarsGrams,
   };
 }
+
+export function calculateBMI(weight: number, height: number): number {
+  return weight / ((height / 100) * (height / 100));
+}
+
+export function getBMICategory(bmi: number): string {
+  if (bmi < 18.5) return "Underweight";
+  if (bmi < 25) return "Normal";
+  if (bmi < 30) return "Overweight";
+  return "Obese";
+}
+
+export function calculateProjectedWeight(
+  currentWeight: number,
+  goal: Goal,
+  weeks: number
+): number {
+  const weeklyChange = goal === "lose" ? -0.5 : goal === "gain" ? 0.25 : 0;
+  return currentWeight + weeklyChange * weeks;
+}

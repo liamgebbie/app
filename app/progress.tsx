@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUser } from "@/contexts/UserContext";
+import { calculateBMI, getBMICategory, calculateProjectedWeight } from "@/utils/calculations";
 
 export default function Progress() {
   const router = useRouter();
@@ -76,6 +77,24 @@ export default function Progress() {
   const weightChange = recentWeights.length >= 2
     ? recentWeights[recentWeights.length - 1].weight - recentWeights[0].weight
     : 0;
+
+  const currentWeight = recentWeights.length > 0
+    ? recentWeights[recentWeights.length - 1].weight
+    : profile.weight;
+
+  const weightInKg = profile.units === "imperial" ? currentWeight * 0.453592 : currentWeight;
+  const heightInCm = profile.units === "imperial" ? profile.height * 2.54 : profile.height;
+  const bmi = calculateBMI(weightInKg, heightInCm);
+  const bmiCategory = getBMICategory(bmi);
+
+  const projectedWeight4Weeks = calculateProjectedWeight(weightInKg, profile.goal, 4);
+  const projectedWeight12Weeks = calculateProjectedWeight(weightInKg, profile.goal, 12);
+
+  const displayWeight = (w: number) => {
+    const weight = profile.units === "imperial" ? w / 0.453592 : w;
+    const unit = profile.units === "imperial" ? "lbs" : "kg";
+    return `${weight.toFixed(1)}${unit}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -234,6 +253,66 @@ export default function Progress() {
                 })}
               </View>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Health Metrics</Text>
+
+            <View style={styles.metricsCard}>
+              <View style={styles.metricRow}>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>BMI</Text>
+                  <Text style={styles.metricValue}>{bmi.toFixed(1)}</Text>
+                  <Text style={styles.metricCategory}>{bmiCategory}</Text>
+                </View>
+                <View style={styles.metricDivider} />
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>TDEE</Text>
+                  <Text style={styles.metricValue}>{profile.tdee}</Text>
+                  <Text style={styles.metricCategory}>cal/day</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Projected Progress</Text>
+            <Text style={styles.sectionSubtitle}>
+              {profile.goal === "lose" ? "If you maintain a consistent calorie deficit" : profile.goal === "gain" ? "If you maintain a consistent calorie surplus" : "If you maintain your current intake"}
+            </Text>
+
+            <View style={styles.projectionCard}>
+              <View style={styles.projectionRow}>
+                <View style={styles.projectionItem}>
+                  <Text style={styles.projectionLabel}>Current</Text>
+                  <Text style={styles.projectionValue}>{displayWeight(weightInKg)}</Text>
+                </View>
+                <View style={styles.projectionArrow}>
+                  <Text style={styles.projectionArrowText}>→</Text>
+                </View>
+                <View style={styles.projectionItem}>
+                  <Text style={styles.projectionLabel}>4 weeks</Text>
+                  <Text style={styles.projectionValue}>{displayWeight(projectedWeight4Weeks)}</Text>
+                  <Text style={[styles.projectionChange, projectedWeight4Weeks < weightInKg && styles.projectionDown]}>
+                    {projectedWeight4Weeks > weightInKg ? "+" : ""}{(projectedWeight4Weeks - weightInKg).toFixed(1)}kg
+                  </Text>
+                </View>
+                <View style={styles.projectionArrow}>
+                  <Text style={styles.projectionArrowText}>→</Text>
+                </View>
+                <View style={styles.projectionItem}>
+                  <Text style={styles.projectionLabel}>12 weeks</Text>
+                  <Text style={styles.projectionValue}>{displayWeight(projectedWeight12Weeks)}</Text>
+                  <Text style={[styles.projectionChange, projectedWeight12Weeks < weightInKg && styles.projectionDown]}>
+                    {projectedWeight12Weeks > weightInKg ? "+" : ""}{(projectedWeight12Weeks - weightInKg).toFixed(1)}kg
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.projectionNote}>
+              💡 Stay consistent with your tracking to achieve better results!
+            </Text>
           </View>
 
           <View style={styles.section}>
@@ -450,5 +529,96 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ff3b30",
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  metricsCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+  },
+  metricRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  metric: {
+    flex: 1,
+    alignItems: "center",
+  },
+  metricDivider: {
+    width: 1,
+    height: 60,
+    backgroundColor: "#333",
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  metricValue: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  metricCategory: {
+    fontSize: 12,
+    color: "#60a5fa",
+    fontWeight: "600",
+  },
+  projectionCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  projectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  projectionItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  projectionLabel: {
+    fontSize: 11,
+    color: "#999",
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
+  projectionValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  projectionChange: {
+    fontSize: 12,
+    color: "#34d399",
+    fontWeight: "600",
+  },
+  projectionDown: {
+    color: "#60a5fa",
+  },
+  projectionArrow: {
+    marginHorizontal: 4,
+  },
+  projectionArrowText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  projectionNote: {
+    fontSize: 13,
+    color: "#999",
+    fontStyle: "italic",
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

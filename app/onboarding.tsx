@@ -13,7 +13,7 @@ import {
 import { useUser } from "@/contexts/UserContext";
 import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
 
-type Step = "welcome" | "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "summary";
+type Step = "welcome" | "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "premiumUpsell" | "summary";
 
 const TOTAL_STEPS = 9;
 const STEP_MAP: Record<Step, number> = {
@@ -66,8 +66,13 @@ export default function Onboarding() {
     router.replace("/dashboard");
   };
 
+  const handleContinueWithoutPremium = () => {
+    setIsPremium(false);
+    setStep("premiumUpsell");
+  };
+
   const handleBack = () => {
-    const stepOrder: Step[] = ["welcome", "stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "summary"];
+    const stepOrder: Step[] = ["welcome", "stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "premiumUpsell", "summary"];
     const currentIndex = stepOrder.indexOf(step);
     if (currentIndex > 0) {
       setStep(stepOrder[currentIndex - 1]);
@@ -785,15 +790,81 @@ export default function Onboarding() {
           )}
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={() => {
-              setIsPremium(false);
-              setStep("summary");
-            }}
+            onPress={handleContinueWithoutPremium}
           >
             <Text style={styles.secondaryButtonText}>Continue without Premium</Text>
           </TouchableOpacity>
         </View>
       </View>
+    );
+  }
+
+  if (step === "premiumUpsell") {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={24} />
+        </TouchableOpacity>
+        <View style={styles.content}>
+          <Text style={styles.title}>You're Missing Out</Text>
+          <Text style={styles.subtitle}>Premium users see 3x better results</Text>
+
+          <View style={styles.upsellSection}>
+            <View style={styles.upsellCard}>
+              <Text style={styles.upsellCardTitle}>🎯 Precision Tracking</Text>
+              <Text style={styles.upsellCardDesc}>
+                Get detailed micronutrient breakdowns and allergen warnings for every meal
+              </Text>
+            </View>
+
+            <View style={styles.upsellCard}>
+              <Text style={styles.upsellCardTitle}>🧠 Smart AI Coach</Text>
+              <Text style={styles.upsellCardDesc}>
+                Receive personalized insights and meal suggestions based on your goals
+              </Text>
+            </View>
+
+            <View style={styles.upsellCard}>
+              <Text style={styles.upsellCardTitle}>📊 Advanced Analytics</Text>
+              <Text style={styles.upsellCardDesc}>
+                Track trends, predict progress, and optimize your nutrition strategy
+              </Text>
+            </View>
+
+            <View style={styles.upsellCard}>
+              <Text style={styles.upsellCardTitle}>⚡ Priority Support</Text>
+              <Text style={styles.upsellCardDesc}>
+                Get help when you need it with dedicated premium support
+              </Text>
+            </View>
+
+            <View style={styles.upsellPriceBox}>
+              <Text style={styles.upsellPriceLabel}>Start your 7-day free trial</Text>
+              <Text style={styles.upsellPrice}>£4.99/month</Text>
+              <Text style={styles.upsellPriceNote}>Cancel anytime, no commitment</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.upsellPremiumButton}
+              onPress={() => {
+                setIsPremium(true);
+                setStep("summary");
+              }}
+            >
+              <Text style={styles.upsellPremiumButtonText}>Start Free Trial</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.textButton}
+            onPress={() => setStep("summary")}
+          >
+            <Text style={styles.textButtonText}>I'll stick with free</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -936,14 +1007,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    paddingTop: 64,
+    paddingTop: 80,
   },
   backButton: {
     position: "absolute" as const,
-    top: 48,
-    left: 24,
+    top: 56,
+    left: 20,
     zIndex: 10,
     padding: 8,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
   },
   welcomeContent: {
     flex: 1,
@@ -1263,7 +1336,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#fff",
-    padding: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 12,
   },
   primaryButtonDisabled: {
@@ -1276,7 +1350,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    padding: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 12,
     backgroundColor: "#1a1a1a",
   },
@@ -1284,5 +1359,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
+  },
+  upsellSection: {
+    gap: 16,
+  },
+  upsellCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+  },
+  upsellCardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  upsellCardDesc: {
+    fontSize: 14,
+    color: "#999",
+    lineHeight: 20,
+  },
+  upsellPriceBox: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginTop: 8,
+    borderWidth: 2,
+    borderColor: "#333",
+  },
+  upsellPriceLabel: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 8,
+  },
+  upsellPrice: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  upsellPriceNote: {
+    fontSize: 12,
+    color: "#666",
+  },
+  upsellPremiumButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 18,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  upsellPremiumButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#000",
+  },
+  textButton: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  textButtonText: {
+    fontSize: 14,
+    color: "#666",
+    textDecorationLine: "underline",
   },
 });
