@@ -7,6 +7,9 @@ export type DietaryPreference = "none" | "vegetarian" | "vegan" | "pescatarian" 
 export type TrackedMacro = "protein" | "carbs" | "fats" | "sugars" | "fiber";
 
 export interface UserProfile {
+  userId?: string;
+  email?: string;
+  dateOfBirth?: string;
   age: number;
   height: number;
   weight: number;
