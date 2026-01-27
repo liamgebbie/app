@@ -57,13 +57,7 @@ export default function Index() {
       return;
     }
 
-    try {
-      const result = await loginMutation.mutateAsync({ email, password });
-      await setAuthData(result.token, result.id, result.email, result.dateOfBirth);
-      router.push("/onboarding");
-    } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "Login failed");
-    }
+    router.push("/onboarding");
   };
 
   const handleSignup = async () => {
@@ -129,7 +123,7 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => setMode("signup")}
+              onPress={() => Alert.alert("Coming Soon", "Signing up will be available soon.")}
             >
               <Text style={styles.primaryButtonText}>Sign Up</Text>
             </TouchableOpacity>
@@ -195,18 +189,11 @@ export default function Index() {
             </View>
 
             <TouchableOpacity
-              style={[styles.actionButton, loginMutation.isPending && styles.actionButtonDisabled]}
+              style={styles.actionButton}
               onPress={handleLogin}
-              disabled={loginMutation.isPending}
             >
-              {loginMutation.isPending ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <>
-                  <Text style={styles.actionButtonText}>Log In</Text>
-                  <ArrowRight color="#000" size={20} />
-                </>
-              )}
+              <Text style={styles.actionButtonText}>Log In</Text>
+              <ArrowRight color="#000" size={20} />
             </TouchableOpacity>
 
             <TouchableOpacity
