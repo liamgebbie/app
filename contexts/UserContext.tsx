@@ -42,10 +42,13 @@ export const [UserProvider, useUser] = createContextHook(() => {
   };
 
   const createProfile = async (data: Omit<UserProfile, "tdee" | "targetCalories" | "targetProtein" | "targetCarbs" | "targetFats" | "targetSugars">) => {
-    const bmr = calculateBMR(data.weight, data.height, data.age, data.gender);
+    const weightInKg = data.units === "imperial" ? data.weight * 0.453592 : data.weight;
+    const heightInCm = data.units === "imperial" ? data.height * 2.54 : data.height;
+    
+    const bmr = calculateBMR(weightInKg, heightInCm, data.age, data.gender);
     const tdee = calculateTDEE(bmr, data.activityLevel);
     const targetCalories = calculateTargetCalories(tdee, data.goal);
-    const macros = calculateMacros(targetCalories, data.weight, data.goal);
+    const macros = calculateMacros(targetCalories, weightInKg, data.goal);
 
     const newProfile: UserProfile = {
       ...data,
@@ -120,8 +123,9 @@ export const [UserProvider, useUser] = createContextHook(() => {
         carbs: acc.carbs + log.carbs,
         fats: acc.fats + log.fats,
         sugars: acc.sugars + log.sugars,
+        fiber: (acc.fiber || 0) + (log.fiber || 0),
       }),
-      { calories: 0, protein: 0, carbs: 0, fats: 0, sugars: 0 }
+      { calories: 0, protein: 0, carbs: 0, fats: 0, sugars: 0, fiber: 0 }
     );
   };
 

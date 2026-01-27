@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
 import { useUser } from "@/contexts/UserContext";
+import { UserProfile } from "@/types/user";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,10 +22,12 @@ export default function Dashboard() {
   const totals = getTodayTotals();
   const remaining = profile.targetCalories - totals.calories;
 
-  const proteinPercent = (totals.protein / profile.targetProtein) * 100;
-  const carbsPercent = (totals.carbs / profile.targetCarbs) * 100;
-  const fatsPercent = (totals.fats / profile.targetFats) * 100;
-  const sugarsPercent = (totals.sugars / profile.targetSugars) * 100;
+  const caloriesPercent = Math.min((totals.calories / profile.targetCalories) * 100, 100);
+  
+  const radius = 80;
+  const strokeWidth = 12;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (circumference * caloriesPercent) / 100;
 
   const today = new Date();
   const dateString = today.toLocaleDateString("en-US", {
@@ -46,76 +50,49 @@ export default function Dashboard() {
 
       <View style={styles.content}>
         <View style={styles.calorieSection}>
-          <Text style={styles.caloriesLabel}>Calories</Text>
-          <Text style={styles.caloriesValue}>{totals.calories}</Text>
-          <Text style={styles.caloriesTarget}>of {profile.targetCalories}</Text>
-          <View style={styles.calorieProgress}>
-            <View
-              style={[
-                styles.calorieProgressBar,
-                { width: `${Math.min((totals.calories / profile.targetCalories) * 100, 100)}%` },
-              ]}
-            />
+          <View style={styles.circleContainer}>
+            <Svg width={200} height={200} style={styles.svg}>
+              <Circle
+                cx={100}
+                cy={100}
+                r={radius}
+                stroke="#2c2c2e"
+                strokeWidth={strokeWidth}
+                fill="none"
+              />
+              <Circle
+                cx={100}
+                cy={100}
+                r={radius}
+                stroke="#fff"
+                strokeWidth={strokeWidth}
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                transform={`rotate(-90 100 100)`}
+              />
+            </Svg>
+            <View style={styles.calorieTextContainer}>
+              <Text style={styles.caloriesValue}>{totals.calories}</Text>
+              <Text style={styles.caloriesTarget}>of {profile.targetCalories}</Text>
+            </View>
           </View>
           <Text style={styles.remainingText}>{remaining > 0 ? remaining : 0} remaining</Text>
         </View>
 
         <View style={styles.macrosSection}>
-          <View style={styles.macroRow}>
-            <Text style={styles.macroLabel}>Protein</Text>
-            <Text style={styles.macroValue}>{totals.protein}/{profile.targetProtein}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <View
-              style={[
-                styles.macroBarFill,
-                styles.macroBarProtein,
-                { width: `${Math.min(proteinPercent, 100)}%` },
-              ]}
-            />
-          </View>
-
-          <View style={styles.macroRow}>
-            <Text style={styles.macroLabel}>Fats</Text>
-            <Text style={styles.macroValue}>{totals.fats}/{profile.targetFats}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <View
-              style={[
-                styles.macroBarFill,
-                styles.macroBarFats,
-                { width: `${Math.min(fatsPercent, 100)}%` },
-              ]}
-            />
-          </View>
-
-          <View style={styles.macroRow}>
-            <Text style={styles.macroLabel}>Carbs</Text>
-            <Text style={styles.macroValue}>{totals.carbs}/{profile.targetCarbs}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <View
-              style={[
-                styles.macroBarFill,
-                styles.macroBarCarbs,
-                { width: `${Math.min(carbsPercent, 100)}%` },
-              ]}
-            />
-          </View>
-
-          <View style={styles.macroRow}>
-            <Text style={styles.macroLabel}>Sugars</Text>
-            <Text style={styles.macroValue}>{totals.sugars}/{profile.targetSugars}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <View
-              style={[
-                styles.macroBarFill,
-                styles.macroBarSugars,
-                { width: `${Math.min(sugarsPercent, 100)}%` },
-              ]}
-            />
-          </View>
+          {profile.trackedMacros.map((macro) => {
+            const macroValue = (totals as Record<string, number>)[macro] || 0;
+            const targetKey = `target${macro.charAt(0).toUpperCase() + macro.slice(1)}` as keyof UserProfile;
+            const targetValue = (profile[targetKey] as number | undefined) || 0;
+            return (
+              <View key={macro} style={styles.macroRow}>
+                <Text style={styles.macroLabel}>{macro.charAt(0).toUpperCase() + macro.slice(1)}</Text>
+                <Text style={styles.macroValue}>{Math.round(macroValue)}g / {Math.round(targetValue)}g</Text>
+              </View>
+            );
+          })}
         </View>
       </View>
 
@@ -170,78 +147,56 @@ const styles = StyleSheet.create({
   },
   calorieSection: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 48,
   },
-  caloriesLabel: {
-    fontSize: 16,
-    color: "#8e8e93",
-    marginBottom: 8,
+  circleContainer: {
+    position: "relative" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  svg: {
+    transform: [{ rotate: "0deg" }],
+  },
+  calorieTextContainer: {
+    position: "absolute" as const,
+    alignItems: "center",
+    justifyContent: "center",
   },
   caloriesValue: {
-    fontSize: 80,
-    fontWeight: "700",
+    fontSize: 48,
+    fontWeight: "700" as const,
     color: "#fff",
-    lineHeight: 88,
+    lineHeight: 56,
   },
   caloriesTarget: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#8e8e93",
-    marginBottom: 20,
-  },
-  calorieProgress: {
-    width: "100%",
-    height: 4,
-    backgroundColor: "#2c2c2e",
-    borderRadius: 2,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
-  calorieProgressBar: {
-    height: "100%",
-    backgroundColor: "#fff",
   },
   remainingText: {
     fontSize: 14,
     color: "#8e8e93",
   },
   macrosSection: {
-    gap: 16,
+    gap: 12,
   },
   macroRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
   },
   macroLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#fff",
+    fontWeight: "500" as const,
   },
   macroValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#8e8e93",
-  },
-  macroBar: {
-    height: 6,
-    backgroundColor: "#2c2c2e",
-    borderRadius: 3,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  macroBarFill: {
-    height: "100%",
-  },
-  macroBarProtein: {
-    backgroundColor: "#4cd964",
-  },
-  macroBarFats: {
-    backgroundColor: "#ff9500",
-  },
-  macroBarCarbs: {
-    backgroundColor: "#ff9500",
-  },
-  macroBarSugars: {
-    backgroundColor: "#ff9500",
   },
   actions: {
     paddingHorizontal: 24,

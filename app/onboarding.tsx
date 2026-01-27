@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, X, Plus } from "lucide-react-native";
 import { useState } from "react";
 import {
   ScrollView,
@@ -10,9 +10,23 @@ import {
   View,
 } from "react-native";
 import { useUser } from "@/contexts/UserContext";
-import { ActivityLevel, Gender, Goal, TrackedMacro } from "@/types/user";
+import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
 
-type Step = "welcome" | "stats" | "region" | "activity" | "goal" | "macros";
+type Step = "welcome" | "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "summary";
+
+const TOTAL_STEPS = 9;
+const STEP_MAP: Record<Step, number> = {
+  welcome: 0,
+  stats: 1,
+  region: 2,
+  allergies: 3,
+  dietary: 4,
+  activity: 5,
+  goal: 6,
+  macros: 7,
+  premium: 8,
+  summary: 9,
+};
 
 export default function Onboarding() {
   const router = useRouter();
@@ -23,21 +37,30 @@ export default function Onboarding() {
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [gender, setGender] = useState<Gender>("male");
+  const [units, setUnits] = useState<Units>("metric");
   const [region, setRegion] = useState("");
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [customAllergy, setCustomAllergy] = useState("");
+  const [dietaryPreference, setDietaryPreference] = useState<DietaryPreference>("none");
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
   const [goal, setGoal] = useState<Goal>("lose");
   const [trackedMacros, setTrackedMacros] = useState<TrackedMacro[]>(["protein", "carbs", "fats"]);
+  const [isPremium, setIsPremium] = useState(false);
 
   const handleComplete = async () => {
     await createProfile({
       age: parseInt(age),
-      height: parseInt(height),
-      weight: parseInt(weight),
+      height: parseFloat(height),
+      weight: parseFloat(weight),
       gender,
+      units,
       region,
+      allergies,
+      dietaryPreference,
       activityLevel,
       goal,
       trackedMacros,
+      isPremium,
     });
     router.replace("/dashboard");
   };
@@ -49,6 +72,28 @@ export default function Onboarding() {
         : [...prev, macro]
     );
   };
+
+  const toggleAllergy = (allergy: string) => {
+    setAllergies((prev) =>
+      prev.includes(allergy)
+        ? prev.filter((a) => a !== allergy)
+        : [...prev, allergy]
+    );
+  };
+
+  const addCustomAllergy = () => {
+    if (customAllergy.trim() && !allergies.includes(customAllergy.trim())) {
+      setAllergies((prev) => [...prev, customAllergy.trim()]);
+      setCustomAllergy("");
+    }
+  };
+
+  const removeAllergy = (allergy: string) => {
+    setAllergies((prev) => prev.filter((a) => a !== allergy));
+  };
+
+  const currentStepNumber = STEP_MAP[step];
+  const showStepCounter = currentStepNumber > 0;
 
   if (step === "welcome") {
     return (
@@ -94,6 +139,11 @@ export default function Onboarding() {
 
   if (step === "stats") {
     const isValid = age && height && weight;
+    const heightLabel = units === "metric" ? "Height (cm)" : "Height (in)";
+    const weightLabel = units === "metric" ? "Weight (kg)" : "Weight (lbs)";
+    const heightPlaceholder = units === "metric" ? "180" : "71";
+    const weightPlaceholder = units === "metric" ? "75" : "165";
+
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
@@ -114,25 +164,63 @@ export default function Onboarding() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Height (cm)</Text>
+              <Text style={styles.label}>Units</Text>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.optionButton,
+                    units === "metric" && styles.optionButtonActive,
+                  ]}
+                  onPress={() => setUnits("metric")}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      units === "metric" && styles.optionButtonTextActive,
+                    ]}
+                  >
+                    Metric
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.optionButton,
+                    units === "imperial" && styles.optionButtonActive,
+                  ]}
+                  onPress={() => setUnits("imperial")}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      units === "imperial" && styles.optionButtonTextActive,
+                    ]}
+                  >
+                    Imperial
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{heightLabel}</Text>
               <TextInput
                 style={styles.input}
                 value={height}
                 onChangeText={setHeight}
                 keyboardType="numeric"
-                placeholder="180"
+                placeholder={heightPlaceholder}
                 placeholderTextColor="#666"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Weight (kg)</Text>
+              <Text style={styles.label}>{weightLabel}</Text>
               <TextInput
                 style={styles.input}
                 value={weight}
                 onChangeText={setWeight}
                 keyboardType="numeric"
-                placeholder="75"
+                placeholder={weightPlaceholder}
                 placeholderTextColor="#666"
               />
             </View>
@@ -176,6 +264,12 @@ export default function Onboarding() {
             </View>
           </View>
         </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}
@@ -226,17 +320,219 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.primaryButton, !region && styles.primaryButtonDisabled]}
-          onPress={() => region && setStep("activity")}
-          disabled={!region}
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
+
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => setStep("allergies")}
+          >
+            <Text style={styles.skipButtonText}>Skip for now</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.primaryButton, !region && styles.primaryButtonDisabled]}
+            onPress={() => region && setStep("allergies")}
+            disabled={!region}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
       </View>
+    );
+  }
+
+  if (step === "allergies") {
+    const commonAllergies = [
+      "Peanuts",
+      "Tree nuts",
+      "Dairy",
+      "Eggs",
+      "Soy",
+      "Wheat",
+      "Fish",
+      "Shellfish",
+      "Gluten",
+      "Lactose",
+    ];
+
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Allergies</Text>
+          <Text style={styles.subtitle}>Help us keep you safe</Text>
+
+          <View style={styles.form}>
+            <View style={styles.allergyGrid}>
+              {commonAllergies.map((allergy) => (
+                <TouchableOpacity
+                  key={allergy}
+                  style={[
+                    styles.allergyChip,
+                    allergies.includes(allergy) && styles.allergyChipActive,
+                  ]}
+                  onPress={() => toggleAllergy(allergy)}
+                >
+                  <Text
+                    style={[
+                      styles.allergyChipText,
+                      allergies.includes(allergy) && styles.allergyChipTextActive,
+                    ]}
+                  >
+                    {allergy}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Add Custom Allergy</Text>
+              <View style={styles.customInputRow}>
+                <TextInput
+                  style={[styles.input, styles.customInput]}
+                  value={customAllergy}
+                  onChangeText={setCustomAllergy}
+                  placeholder="Enter allergy"
+                  placeholderTextColor="#666"
+                  onSubmitEditing={addCustomAllergy}
+                />
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={addCustomAllergy}
+                >
+                  <Plus color="#fff" size={20} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {allergies.filter((a) => !commonAllergies.includes(a)).length > 0 && (
+              <View style={styles.selectedAllergies}>
+                <Text style={styles.label}>Your Custom Allergies</Text>
+                <View style={styles.allergyTagsContainer}>
+                  {allergies
+                    .filter((a) => !commonAllergies.includes(a))
+                    .map((allergy) => (
+                      <View key={allergy} style={styles.allergyTag}>
+                        <Text style={styles.allergyTagText}>{allergy}</Text>
+                        <TouchableOpacity onPress={() => removeAllergy(allergy)}>
+                          <X color="#fff" size={16} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                </View>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+        </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
+
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => setStep("dietary")}
+          >
+            <Text style={styles.skipButtonText}>Skip for now</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setStep("dietary")}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  if (step === "dietary") {
+    const dietaryPreferences: { value: DietaryPreference; label: string; desc: string }[] = [
+      { value: "none", label: "No Preference", desc: "No dietary restrictions" },
+      { value: "vegetarian", label: "Vegetarian", desc: "No meat or fish" },
+      { value: "vegan", label: "Vegan", desc: "No animal products" },
+      { value: "pescatarian", label: "Pescatarian", desc: "Fish but no meat" },
+      { value: "keto", label: "Keto", desc: "Low carb, high fat" },
+      { value: "paleo", label: "Paleo", desc: "Whole foods, no grains" },
+      { value: "halal", label: "Halal", desc: "Islamic dietary laws" },
+      { value: "kosher", label: "Kosher", desc: "Jewish dietary laws" },
+    ];
+
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Dietary Preference</Text>
+          <Text style={styles.subtitle}>How do you like to eat?</Text>
+
+          <View style={styles.form}>
+            {dietaryPreferences.map((pref) => (
+              <TouchableOpacity
+                key={pref.value}
+                style={[
+                  styles.activityCard,
+                  dietaryPreference === pref.value && styles.activityCardActive,
+                ]}
+                onPress={() => setDietaryPreference(pref.value)}
+              >
+                <Text
+                  style={[
+                    styles.activityLabel,
+                    dietaryPreference === pref.value && styles.activityLabelActive,
+                  ]}
+                >
+                  {pref.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.activityDesc,
+                    dietaryPreference === pref.value && styles.activityDescActive,
+                  ]}
+                >
+                  {pref.desc}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+        </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
+
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => setStep("activity")}
+          >
+            <Text style={styles.skipButtonText}>Skip for now</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setStep("activity")}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -250,7 +546,7 @@ export default function Onboarding() {
     ];
 
     return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>Activity Level</Text>
           <Text style={styles.subtitle}>How often do you train?</Text>
@@ -284,7 +580,15 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -293,7 +597,7 @@ export default function Onboarding() {
           <Text style={styles.primaryButtonText}>Continue</Text>
           <ArrowRight color="#fff" size={20} />
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -339,7 +643,15 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
 
         <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("macros")}>
           <Text style={styles.primaryButtonText}>Continue</Text>
@@ -359,7 +671,7 @@ export default function Onboarding() {
     ];
 
     return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>Track Macros</Text>
           <Text style={styles.subtitle}>Selected macros will be tracked in your dashboard</Text>
@@ -393,19 +705,221 @@ export default function Onboarding() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
         </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.primaryButton, trackedMacros.length === 0 && styles.primaryButtonDisabled]}
-          onPress={handleComplete}
+          onPress={() => setStep("premium")}
           disabled={trackedMacros.length === 0}
         >
-          <Text style={styles.primaryButtonText}>Complete Setup</Text>
+          <Text style={styles.primaryButtonText}>Continue</Text>
           <ArrowRight color="#fff" size={20} />
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  }
+
+  if (step === "premium") {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Go Premium</Text>
+          <Text style={styles.subtitle}>Unlock advanced features</Text>
+
+          <View style={styles.premiumCard}>
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumBadgeText}>7 DAYS FREE</Text>
+            </View>
+            
+            <Text style={styles.premiumPrice}>£4.99/month</Text>
+            <Text style={styles.premiumPriceDesc}>then £4.99 per month</Text>
+
+            <View style={styles.premiumFeatures}>
+              <View style={styles.premiumFeature}>
+                <View style={styles.premiumFeatureDot} />
+                <Text style={styles.premiumFeatureText}>Advanced AI insights</Text>
+              </View>
+              <View style={styles.premiumFeature}>
+                <View style={styles.premiumFeatureDot} />
+                <Text style={styles.premiumFeatureText}>Detailed nutrition breakdown</Text>
+              </View>
+              <View style={styles.premiumFeature}>
+                <View style={styles.premiumFeatureDot} />
+                <Text style={styles.premiumFeatureText}>Custom meal planning</Text>
+              </View>
+              <View style={styles.premiumFeature}>
+                <View style={styles.premiumFeatureDot} />
+                <Text style={styles.premiumFeatureText}>Priority support</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.premiumButton}
+              onPress={() => {
+                setIsPremium(true);
+                setStep("summary");
+              }}
+            >
+              <Text style={styles.premiumButtonText}>Start Free Trial</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.premiumDisclaimer}>
+              Cancel anytime. No commitment.
+            </Text>
+          </View>
+        </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => {
+            setIsPremium(false);
+            setStep("summary");
+          }}
+        >
+          <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity>
       </View>
     );
   }
+
+  if (step === "summary") {
+    const displayHeight = units === "imperial" ? `${height} in` : `${height} cm`;
+    const displayWeight = units === "imperial" ? `${weight} lbs` : `${weight} kg`;
+    const goalLabels: Record<Goal, string> = {
+      lose: "Lose Fat",
+      maintain: "Maintain Weight",
+      gain: "Build Muscle",
+    };
+    const activityLabels: Record<ActivityLevel, string> = {
+      sedentary: "Sedentary",
+      light: "Light",
+      moderate: "Moderate",
+      active: "Active",
+      very_active: "Very Active",
+    };
+
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Your Profile</Text>
+          <Text style={styles.subtitle}>Here&apos;s what we&apos;ve learned about you</Text>
+
+          <View style={styles.summarySection}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryCardTitle}>Physical Stats</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Age</Text>
+                <Text style={styles.summaryValue}>{age} years</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Height</Text>
+                <Text style={styles.summaryValue}>{displayHeight}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Weight</Text>
+                <Text style={styles.summaryValue}>{displayWeight}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Gender</Text>
+                <Text style={styles.summaryValue}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryCardTitle}>Lifestyle</Text>
+              {region && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Region</Text>
+                  <Text style={styles.summaryValue}>{region}</Text>
+                </View>
+              )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Activity</Text>
+                <Text style={styles.summaryValue}>{activityLabels[activityLevel]}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Goal</Text>
+                <Text style={styles.summaryValue}>{goalLabels[goal]}</Text>
+              </View>
+              {dietaryPreference !== "none" && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Diet</Text>
+                  <Text style={styles.summaryValue}>
+                    {dietaryPreference.charAt(0).toUpperCase() + dietaryPreference.slice(1)}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {allergies.length > 0 && (
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryCardTitle}>Allergies</Text>
+                <View style={styles.summaryTags}>
+                  {allergies.map((allergy) => (
+                    <View key={allergy} style={styles.summaryTag}>
+                      <Text style={styles.summaryTagText}>{allergy}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryCardTitle}>Tracking</Text>
+              <View style={styles.summaryTags}>
+                {trackedMacros.map((macro) => (
+                  <View key={macro} style={styles.summaryTag}>
+                    <Text style={styles.summaryTagText}>
+                      {macro.charAt(0).toUpperCase() + macro.slice(1)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {isPremium && (
+              <View style={[styles.summaryCard, styles.summaryCardPremium]}>
+                <Text style={styles.summaryCardTitle}>Premium</Text>
+                <Text style={styles.summaryPremiumText}>7-day free trial active</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.refineNote}>We&apos;ll refine this as you log more data.</Text>
+        </View>
+
+        {showStepCounter && (
+          <View style={styles.stepCounter}>
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleComplete}
+        >
+          <Text style={styles.primaryButtonText}>Start Tracking</Text>
+          <ArrowRight color="#fff" size={20} />
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  }
+
+  return null;
 }
 
 const styles = StyleSheet.create({
@@ -527,6 +1041,212 @@ const styles = StyleSheet.create({
   activityDescActive: {
     color: "#666",
   },
+  allergyGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  allergyChip: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  allergyChipActive: {
+    backgroundColor: "#fff",
+  },
+  allergyChipText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#999",
+  },
+  allergyChipTextActive: {
+    color: "#000",
+  },
+  customInputRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  customInput: {
+    flex: 1,
+  },
+  addButton: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    width: 52,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedAllergies: {
+    gap: 12,
+  },
+  allergyTagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  allergyTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingLeft: 16,
+    paddingRight: 12,
+    paddingVertical: 8,
+  },
+  allergyTagText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#000",
+  },
+  premiumCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+  },
+  premiumBadge: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginBottom: 20,
+  },
+  premiumBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#000",
+    letterSpacing: 1,
+  },
+  premiumPrice: {
+    fontSize: 40,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  premiumPriceDesc: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 32,
+  },
+  premiumFeatures: {
+    width: "100%",
+    gap: 16,
+    marginBottom: 32,
+  },
+  premiumFeature: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  premiumFeatureDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#fff",
+  },
+  premiumFeatureText: {
+    fontSize: 16,
+    color: "#ccc",
+  },
+  premiumButton: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  premiumButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#000",
+  },
+  premiumDisclaimer: {
+    fontSize: 12,
+    color: "#666",
+  },
+  summarySection: {
+    gap: 16,
+  },
+  summaryCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    gap: 12,
+  },
+  summaryCardPremium: {
+    backgroundColor: "#fff",
+  },
+  summaryCardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: "#999",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  summaryTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  summaryTag: {
+    backgroundColor: "#2c2c2e",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  summaryTagText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#fff",
+  },
+  summaryPremiumText: {
+    fontSize: 14,
+    color: "#000",
+    fontWeight: "600",
+  },
+  refineNote: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 24,
+    fontStyle: "italic",
+  },
+  infoNote: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  stepCounter: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  stepCounterText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
+  },
+  buttonGroup: {
+    gap: 12,
+    padding: 24,
+  },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -544,5 +1264,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#000",
+  },
+  skipButton: {
+    alignItems: "center",
+    padding: 18,
+  },
+  skipButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#999",
   },
 });
