@@ -142,12 +142,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   content: {
-    flex: 1,
     paddingHorizontal: 24,
   },
   calorieSection: {
     alignItems: "center",
-    marginBottom: 48,
+    marginBottom: 32,
   },
   circleContainer: {
     position: "relative" as const,
@@ -179,6 +178,7 @@ const styles = StyleSheet.create({
   },
   macrosSection: {
     gap: 12,
+    marginBottom: 24,
   },
   macroRow: {
     flexDirection: "row" as const,
