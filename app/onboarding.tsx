@@ -71,7 +71,7 @@ export default function Onboarding() {
       trackedMacros,
       isPremium,
     });
-    router.replace("/dashboard");
+    router.replace("/(tabs)");
   };
 
   const handleContinueWithoutPremium = () => {

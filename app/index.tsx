@@ -39,7 +39,7 @@ export default function Index() {
 
   useEffect(() => {
     if (!isLoading && profile) {
-      router.replace("/dashboard");
+      router.replace("/(tabs)");
     }
   }, [isLoading, profile, router]);
 
@@ -60,7 +60,7 @@ export default function Index() {
     await setAuthData("dummy-token", "dummy-user-id", email, "1990-01-01");
     
     if (profile) {
-      router.replace("/dashboard");
+      router.replace("/(tabs)");
     } else {
       router.replace("/onboarding");
     }

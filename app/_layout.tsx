@@ -15,10 +15,11 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="onboarding" />
-      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="log-food" />
       <Stack.Screen name="insights" />
       <Stack.Screen name="progress" />
+      <Stack.Screen name="show-ai" />
     </Stack>
   );
 }
