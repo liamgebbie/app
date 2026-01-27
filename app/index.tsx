@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal } from "react-native";
 import { useUser } from "@/contexts/UserContext";
 import { trpc } from "@/lib/trpc";
 
@@ -14,9 +14,28 @@ export default function Index() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(1990);
+  const [selectedMonth, setSelectedMonth] = useState(1);
+  const [selectedDay, setSelectedDay] = useState(1);
 
   const loginMutation = trpc.auth.login.useMutation();
   const signupMutation = trpc.auth.signup.useMutation();
+
+  const handleDateConfirm = useCallback(() => {
+    const month = selectedMonth.toString().padStart(2, "0");
+    const day = selectedDay.toString().padStart(2, "0");
+    setDateOfBirth(`${selectedYear}-${month}-${day}`);
+    setShowDatePicker(false);
+  }, [selectedYear, selectedMonth, selectedDay]);
+
+  const getDaysInMonth = useCallback((year: number, month: number) => {
+    return new Date(year, month, 0).getDate();
+  }, []);
+
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const days = Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1);
 
   useEffect(() => {
     if (!isLoading && profile) {
@@ -63,6 +82,7 @@ export default function Index() {
       await setAuthData(result.token, result.id, result.email, result.dateOfBirth);
       router.push("/onboarding");
     } catch (error) {
+      console.error("Signup error:", error);
       Alert.alert("Error", error instanceof Error ? error.message : "Signup failed");
     }
   };
@@ -216,97 +236,179 @@ export default function Index() {
     );
   }
 
-  if (mode === "signup") {
-    return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.formContainer}>
-          <View style={styles.formHeader}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Start your health journey today</Text>
-          </View>
+  return (
+    <>
+      <Modal
+        visible={showDatePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.datePickerModal}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerTitle}>Select Date of Birth</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.datePickerCancel}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.datePickerContainer}>
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Year</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {years.map((year) => (
+                    <TouchableOpacity
+                      key={year}
+                      style={[styles.pickerItem, selectedYear === year && styles.pickerItemSelected]}
+                      onPress={() => setSelectedYear(year)}
+                    >
+                      <Text style={[styles.pickerItemText, selectedYear === year && styles.pickerItemTextSelected]}>
+                        {year}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="you@example.com"
-                placeholderTextColor="#666"
-              />
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Month</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {months.map((month) => (
+                    <TouchableOpacity
+                      key={month}
+                      style={[styles.pickerItem, selectedMonth === month && styles.pickerItemSelected]}
+                      onPress={() => {
+                        setSelectedMonth(month);
+                        const maxDays = getDaysInMonth(selectedYear, month);
+                        if (selectedDay > maxDays) {
+                          setSelectedDay(maxDays);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, selectedMonth === month && styles.pickerItemTextSelected]}>
+                        {month.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Day</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {days.map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={[styles.pickerItem, selectedDay === day && styles.pickerItemSelected]}
+                      onPress={() => setSelectedDay(day)}
+                    >
+                      <Text style={[styles.pickerItemText, selectedDay === day && styles.pickerItemTextSelected]}>
+                        {day.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="At least 6 characters"
-                placeholderTextColor="#666"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Date of Birth</Text>
-              <TextInput
-                style={styles.input}
-                value={dateOfBirth}
-                onChangeText={setDateOfBirth}
-                placeholder="YYYY-MM-DD (e.g. 1990-01-15)"
-                placeholderTextColor="#666"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.actionButton, signupMutation.isPending && styles.actionButtonDisabled]}
-              onPress={handleSignup}
-              disabled={signupMutation.isPending}
-            >
-              {signupMutation.isPending ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <>
-                  <Text style={styles.actionButtonText}>Create Account</Text>
-                  <ArrowRight color="#000" size={20} />
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={() => {
-                setMode("login");
-                setEmail("");
-                setPassword("");
-                setDateOfBirth("");
-              }}
-            >
-              <Text style={styles.switchButtonText}>Already have an account? Log In</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.backToWelcome}
-              onPress={() => {
-                setMode("welcome");
-                setEmail("");
-                setPassword("");
-                setDateOfBirth("");
-              }}
-            >
-              <Text style={styles.backToWelcomeText}>← Back</Text>
+            <TouchableOpacity style={styles.datePickerConfirm} onPress={handleDateConfirm}>
+              <Text style={styles.datePickerConfirmText}>Confirm</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    );
-  }
+      </Modal>
+      
+      {mode === "signup" && (
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.formContainer}>
+            <View style={styles.formHeader}>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Start your health journey today</Text>
+            </View>
 
-  return null;
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholder="you@example.com"
+                  placeholderTextColor="#666"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  placeholder="At least 6 characters"
+                  placeholderTextColor="#666"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={[styles.dateButtonText, !dateOfBirth && styles.dateButtonPlaceholder]}>
+                    {dateOfBirth || "Select your date of birth"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.actionButton, signupMutation.isPending && styles.actionButtonDisabled]}
+                onPress={handleSignup}
+                disabled={signupMutation.isPending}
+              >
+                {signupMutation.isPending ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <>
+                    <Text style={styles.actionButtonText}>Create Account</Text>
+                    <ArrowRight color="#000" size={20} />
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={() => {
+                  setMode("login");
+                  setEmail("");
+                  setPassword("");
+                  setDateOfBirth("");
+                }}
+              >
+                <Text style={styles.switchButtonText}>Already have an account? Log In</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.backToWelcome}
+                onPress={() => {
+                  setMode("welcome");
+                  setEmail("");
+                  setPassword("");
+                  setDateOfBirth("");
+                }}
+              >
+                <Text style={styles.backToWelcomeText}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      )}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -461,5 +563,92 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
+  },
+  dateButton: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: "#fff",
+  },
+  dateButtonPlaceholder: {
+    color: "#666",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "flex-end",
+  },
+  datePickerModal: {
+    backgroundColor: "#1a1a1a",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: "80%",
+  },
+  datePickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  datePickerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  datePickerCancel: {
+    fontSize: 16,
+    color: "#999",
+  },
+  datePickerContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 24,
+  },
+  pickerColumn: {
+    flex: 1,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#999",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  pickerScroll: {
+    height: 250,
+    backgroundColor: "#0a0a0a",
+    borderRadius: 12,
+  },
+  pickerItem: {
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  pickerItemSelected: {
+    backgroundColor: "#fff",
+  },
+  pickerItemText: {
+    fontSize: 16,
+    color: "#999",
+  },
+  pickerItemTextSelected: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  datePickerConfirm: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  datePickerConfirmText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#000",
   },
 });
