@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ArrowRight, X, Plus, ChevronLeft } from "lucide-react-native";
+import { ArrowRight, X, Plus, ChevronLeft, HelpCircle } from "lucide-react-native";
 import { useState } from "react";
 import {
   Keyboard,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useUser } from "@/contexts/UserContext";
 import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
+import { calculateBMI, getBMICategory, calculateProjectedWeight, calculateBMR, calculateTDEE, calculateTargetCalories } from "@/utils/calculations";
 
 type Step = "welcome" | "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "premiumUpsell" | "summary";
 
@@ -26,6 +27,7 @@ const STEP_MAP: Record<Step, number> = {
   goal: 6,
   macros: 7,
   premium: 8,
+  premiumUpsell: 10,
   summary: 9,
 };
 
@@ -47,6 +49,7 @@ export default function Onboarding() {
   const [goal, setGoal] = useState<Goal>("lose");
   const [trackedMacros, setTrackedMacros] = useState<TrackedMacro[]>(["protein", "carbs", "fats"]);
   const [isPremium, setIsPremium] = useState(false);
+  const [showBMIInfo, setShowBMIInfo] = useState(false);
 
   const handleComplete = async () => {
     await createProfile({
@@ -806,7 +809,7 @@ export default function Onboarding() {
           <ChevronLeft color="#fff" size={24} />
         </TouchableOpacity>
         <View style={styles.content}>
-          <Text style={styles.title}>You're Missing Out</Text>
+          <Text style={styles.title}>You&apos;re Missing Out</Text>
           <Text style={styles.subtitle}>Premium users see 3x better results</Text>
 
           <View style={styles.upsellSection}>
@@ -839,7 +842,10 @@ export default function Onboarding() {
             </View>
 
             <View style={styles.upsellPriceBox}>
-              <Text style={styles.upsellPriceLabel}>Start your 7-day free trial</Text>
+              <View style={styles.upsellFreeTrialBadge}>
+                <Text style={styles.upsellFreeTrialText}>🎉 7 DAY FREE TRIAL 🎉</Text>
+              </View>
+              <Text style={styles.upsellPriceLabel}>Then only</Text>
               <Text style={styles.upsellPrice}>£4.99/month</Text>
               <Text style={styles.upsellPriceNote}>Cancel anytime, no commitment</Text>
             </View>
@@ -861,7 +867,7 @@ export default function Onboarding() {
             style={styles.textButton}
             onPress={() => setStep("summary")}
           >
-            <Text style={styles.textButtonText}>I'll stick with free</Text>
+            <Text style={styles.textButtonText}>I&apos;ll stick with free</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -883,6 +889,22 @@ export default function Onboarding() {
       active: "Active",
       very_active: "Very Active",
     };
+
+    const heightInCm = units === "imperial" ? parseFloat(height) * 2.54 : parseFloat(height);
+    const weightInKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const bmi = calculateBMI(weightInKg, heightInCm);
+    const bmiCategory = getBMICategory(bmi);
+    const bmr = calculateBMR(weightInKg, heightInCm, parseInt(age), gender);
+    const tdee = calculateTDEE(bmr, activityLevel);
+    const targetCalories = calculateTargetCalories(tdee, goal);
+    const projectedWeight12Weeks = calculateProjectedWeight(weightInKg, goal, 12);
+    const projectedWeightDisplay = units === "imperial" 
+      ? `${(projectedWeight12Weeks / 0.453592).toFixed(1)} lbs` 
+      : `${projectedWeight12Weeks.toFixed(1)} kg`;
+    const weightChange = Math.abs(projectedWeight12Weeks - weightInKg);
+    const weightChangeDisplay = units === "imperial"
+      ? `${(weightChange / 0.453592).toFixed(1)} lbs`
+      : `${weightChange.toFixed(1)} kg`;
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -911,6 +933,50 @@ export default function Onboarding() {
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Gender</Text>
                 <Text style={styles.summaryValue}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryCardTitle}>Health Metrics</Text>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryLabelWithInfo}>
+                  <Text style={styles.summaryLabel}>WHO classifies you as</Text>
+                  <TouchableOpacity onPress={() => setShowBMIInfo(!showBMIInfo)}>
+                    <HelpCircle color="#666" size={16} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.summaryValue}>{bmiCategory}</Text>
+              </View>
+              {showBMIInfo && (
+                <View style={styles.bmiInfoBox}>
+                  <Text style={styles.bmiInfoText}>
+                    The World Health Organization (WHO) is a specialized agency of the United Nations responsible for international public health. They classify weight status using BMI ranges:
+                    {"\n\n"}• Underweight: BMI &lt; 18.5
+                    {"\n"}• Normal: BMI 18.5-24.9
+                    {"\n"}• Overweight: BMI 25-29.9
+                    {"\n"}• Obese: BMI ≥ 30
+                    {"\n\n"}Your BMI: {bmi.toFixed(1)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Daily Calorie Target</Text>
+                <Text style={styles.summaryValue}>{targetCalories} kcal</Text>
+              </View>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryCardTitle}>Projected Progress</Text>
+              <Text style={styles.projectedSubtitle}>If you stay consistent for 12 weeks:</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Projected Weight</Text>
+                <Text style={styles.summaryValue}>{projectedWeightDisplay}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Potential Change</Text>
+                <Text style={[styles.summaryValue, goal === "lose" ? styles.summaryValueSuccess : undefined]}>
+                  {goal === "lose" ? "-" : goal === "gain" ? "+" : ""}{weightChangeDisplay}
+                </Text>
               </View>
             </View>
 
@@ -1007,7 +1073,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    paddingTop: 80,
+    paddingTop: 100,
   },
   backButton: {
     position: "absolute" as const,
@@ -1386,7 +1452,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
     borderWidth: 2,
-    borderColor: "#333",
+    borderColor: "#fff",
+  },
+  upsellFreeTrialBadge: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  upsellFreeTrialText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#000",
+    letterSpacing: 1.5,
   },
   upsellPriceLabel: {
     fontSize: 14,
@@ -1422,5 +1501,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textDecorationLine: "underline",
+  },
+  summaryLabelWithInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  bmiInfoBox: {
+    backgroundColor: "#2c2c2e",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 4,
+  },
+  bmiInfoText: {
+    fontSize: 12,
+    color: "#ccc",
+    lineHeight: 18,
+  },
+  projectedSubtitle: {
+    fontSize: 13,
+    color: "#999",
+    marginBottom: 12,
+    fontStyle: "italic",
+  },
+  summaryValueSuccess: {
+    color: "#4ade80",
   },
 });
