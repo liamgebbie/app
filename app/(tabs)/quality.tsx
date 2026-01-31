@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { ScanBarcode, ChevronRight, Info, Clock, Flame, ThumbsUp, ThumbsDown, ChevronDown } from "lucide-react-native";
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -55,7 +54,6 @@ const MEAL_PREFERENCES_KEY = "meal_preferences";
 
 export default function Quality() {
   const { profile } = useUser();
-  const router = useRouter();
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedConcern, setSelectedConcern] = useState<string | null>(null);
@@ -314,7 +312,7 @@ export default function Quality() {
     if (hour >= 10.5 && hour < 15) return lunch;
     if (hour >= 15 && hour < 18) return lightMeal;
     return dinner;
-  }, [profile, currentMealType]);
+  }, [profile]);
 
   const handleScan = async () => {
     if (!permission) {
