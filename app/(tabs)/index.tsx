@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { User, Sparkles, Camera } from "lucide-react-native";
 import {
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -48,7 +49,11 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.calorieSection}>
           <View style={styles.circleContainer}>
             <Svg width={200} height={200} style={styles.svg}>
@@ -94,18 +99,18 @@ export default function Dashboard() {
             );
           })}
         </View>
-      </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.tellAiButton} onPress={() => router.push("/log-food")}>
-          <Sparkles color="#fff" size={20} />
-          <Text style={styles.tellAiText}>Tell AI</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.showAiButton} onPress={() => router.push("/show-ai")}>
-          <Camera color="#fff" size={20} />
-          <Text style={styles.showAiText}>Show AI</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.tellAiButton} onPress={() => router.push("/log-food")}>
+            <Sparkles color="#fff" size={20} />
+            <Text style={styles.tellAiText}>Tell AI</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.showAiButton} onPress={() => router.push("/show-ai")}>
+            <Camera color="#fff" size={20} />
+            <Text style={styles.showAiText}>Show AI</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -120,7 +125,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
     paddingBottom: 24,
   },
   title: {
@@ -141,12 +153,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  content: {
-    paddingHorizontal: 24,
-  },
+
   calorieSection: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 24,
   },
   circleContainer: {
     position: "relative" as const,
@@ -177,8 +187,8 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
   },
   macrosSection: {
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 20,
   },
   macroRow: {
     flexDirection: "row" as const,
@@ -199,8 +209,6 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
   },
   actions: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
     gap: 12,
   },
   tellAiButton: {
