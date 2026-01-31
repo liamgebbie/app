@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { User, Sparkles, Camera } from "lucide-react-native";
 import {
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -25,8 +24,8 @@ export default function Dashboard() {
 
   const caloriesPercent = Math.min((totals.calories / profile.targetCalories) * 100, 100);
   
-  const radius = 80;
-  const strokeWidth = 12;
+  const radius = 65;
+  const strokeWidth = 10;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * caloriesPercent) / 100;
 
@@ -49,25 +48,21 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.content}>
         <View style={styles.calorieSection}>
           <View style={styles.circleContainer}>
-            <Svg width={200} height={200} style={styles.svg}>
+            <Svg width={160} height={160} style={styles.svg}>
               <Circle
-                cx={100}
-                cy={100}
+                cx={80}
+                cy={80}
                 r={radius}
                 stroke="#2c2c2e"
                 strokeWidth={strokeWidth}
                 fill="none"
               />
               <Circle
-                cx={100}
-                cy={100}
+                cx={80}
+                cy={80}
                 r={radius}
                 stroke="#fff"
                 strokeWidth={strokeWidth}
@@ -75,7 +70,7 @@ export default function Dashboard() {
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
-                transform={`rotate(-90 100 100)`}
+                transform={`rotate(-90 80 80)`}
               />
             </Svg>
             <View style={styles.calorieTextContainer}>
@@ -110,7 +105,7 @@ export default function Dashboard() {
             <Text style={styles.showAiText}>Show AI</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -125,21 +120,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
-  scrollView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
+    justifyContent: "space-between",
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "700",
     color: "#fff",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   date: {
     fontSize: 14,
@@ -156,13 +150,13 @@ const styles = StyleSheet.create({
 
   calorieSection: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   circleContainer: {
     position: "relative" as const,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 8,
   },
   svg: {
     transform: [{ rotate: "0deg" }],
@@ -173,10 +167,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   caloriesValue: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: "700" as const,
     color: "#fff",
-    lineHeight: 56,
+    lineHeight: 48,
   },
   caloriesTarget: {
     fontSize: 14,
@@ -187,14 +181,14 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
   },
   macrosSection: {
-    gap: 10,
-    marginBottom: 20,
+    gap: 8,
+    marginBottom: 16,
   },
   macroRow: {
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     backgroundColor: "#1a1a1a",
     borderRadius: 8,
@@ -217,7 +211,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#000",
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 12,
   },
   tellAiText: {
@@ -231,7 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#2c2c2e",
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 12,
   },
   showAiText: {

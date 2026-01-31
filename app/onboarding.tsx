@@ -701,7 +701,7 @@ export default function Onboarding() {
 
   if (step === "premium") {
     return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <ChevronLeft color="#fff" size={24} />
         </TouchableOpacity>
@@ -763,7 +763,7 @@ export default function Onboarding() {
             <Text style={styles.secondaryButtonText}>Continue without Premium</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -1036,9 +1036,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   content: {
-    flex: 1,
     padding: 24,
-    paddingTop: 100,
+    paddingTop: 80,
   },
   backButton: {
     position: "absolute" as const,
