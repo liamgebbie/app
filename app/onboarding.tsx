@@ -55,6 +55,7 @@ export default function Onboarding() {
   const [trackedMacros, setTrackedMacros] = useState<TrackedMacro[]>(["protein", "carbs", "fats"]);
   const [isPremium, setIsPremium] = useState(false);
   const [showBMIInfo, setShowBMIInfo] = useState(false);
+  const [subscriptionType, setSubscriptionType] = useState<"monthly" | "yearly">("yearly");
 
   const handleComplete = async () => {
     await createProfile({
@@ -714,8 +715,26 @@ export default function Onboarding() {
               <Text style={styles.premiumBadgeText}>7 DAYS FREE</Text>
             </View>
             
-            <Text style={styles.premiumPrice}>£4.99/month</Text>
-            <Text style={styles.premiumPriceDesc}>then £4.99 per month</Text>
+            <View style={styles.subscriptionToggle}>
+              <TouchableOpacity
+                style={[styles.toggleOption, subscriptionType === "monthly" && styles.toggleOptionActive]}
+                onPress={() => setSubscriptionType("monthly")}
+              >
+                <Text style={[styles.toggleOptionText, subscriptionType === "monthly" && styles.toggleOptionTextActive]}>Monthly</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleOption, subscriptionType === "yearly" && styles.toggleOptionActive]}
+                onPress={() => setSubscriptionType("yearly")}
+              >
+                <Text style={[styles.toggleOptionText, subscriptionType === "yearly" && styles.toggleOptionTextActive]}>Yearly</Text>
+                <View style={styles.saveBadge}>
+                  <Text style={styles.saveBadgeText}>Save £10</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.premiumPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£49.99/year"}</Text>
+            <Text style={styles.premiumPriceDesc}>{subscriptionType === "monthly" ? "then £4.99 per month" : "then £49.99 per year"}</Text>
 
             <View style={styles.premiumFeatures}>
               <View style={styles.premiumFeature}>
@@ -810,9 +829,25 @@ export default function Onboarding() {
               <View style={styles.upsellFreeTrialBadge}>
                 <Text style={styles.upsellFreeTrialText}>🎉 7 DAY FREE TRIAL 🎉</Text>
               </View>
+              
+              <View style={styles.subscriptionToggleSmall}>
+                <TouchableOpacity
+                  style={[styles.toggleOptionSmall, subscriptionType === "monthly" && styles.toggleOptionSmallActive]}
+                  onPress={() => setSubscriptionType("monthly")}
+                >
+                  <Text style={[styles.toggleOptionTextSmall, subscriptionType === "monthly" && styles.toggleOptionTextSmallActive]}>Monthly</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleOptionSmall, subscriptionType === "yearly" && styles.toggleOptionSmallActive]}
+                  onPress={() => setSubscriptionType("yearly")}
+                >
+                  <Text style={[styles.toggleOptionTextSmall, subscriptionType === "yearly" && styles.toggleOptionTextSmallActive]}>Yearly</Text>
+                </TouchableOpacity>
+              </View>
+
               <Text style={styles.upsellPriceLabel}>Then only</Text>
-              <Text style={styles.upsellPrice}>£4.99/month</Text>
-              <Text style={styles.upsellPriceNote}>Cancel anytime, no commitment</Text>
+              <Text style={styles.upsellPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£49.99/year"}</Text>
+              <Text style={styles.upsellPriceNote}>{subscriptionType === "yearly" ? "Save £10 per year • " : ""}Cancel anytime, no commitment</Text>
             </View>
 
             <TouchableOpacity
@@ -1034,14 +1069,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "space-between",
+    paddingBottom: 20,
   },
   content: {
-    padding: 24,
-    paddingTop: 80,
+    paddingHorizontal: 24,
+    paddingTop: 70,
+    paddingBottom: 20,
   },
   backButton: {
     position: "absolute" as const,
-    top: 56,
+    top: 50,
     left: 20,
     zIndex: 10,
     padding: 8,
@@ -1078,7 +1115,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 8,
@@ -1282,6 +1319,71 @@ const styles = StyleSheet.create({
   premiumDisclaimer: {
     fontSize: 12,
     color: "#666",
+    textAlign: "center",
+    marginTop: 12,
+  },
+  subscriptionToggle: {
+    flexDirection: "row",
+    backgroundColor: "#0a0a0a",
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+    width: "100%",
+  },
+  toggleOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  toggleOptionActive: {
+    backgroundColor: "#fff",
+  },
+  toggleOptionText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
+  },
+  toggleOptionTextActive: {
+    color: "#000",
+  },
+  saveBadge: {
+    backgroundColor: "#000",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  saveBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  subscriptionToggleSmall: {
+    flexDirection: "row",
+    backgroundColor: "#0a0a0a",
+    borderRadius: 8,
+    padding: 3,
+    marginVertical: 16,
+  },
+  toggleOptionSmall: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  toggleOptionSmallActive: {
+    backgroundColor: "#fff",
+  },
+  toggleOptionTextSmall: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+  },
+  toggleOptionTextSmallActive: {
+    color: "#000",
   },
   summarySection: {
     gap: 16,
@@ -1357,8 +1459,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   footer: {
-    padding: 24,
-    paddingTop: 12,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   primaryButton: {
     flexDirection: "row",

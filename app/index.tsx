@@ -19,7 +19,6 @@ export default function Index() {
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
 
-  const loginMutation = trpc.auth.login.useMutation();
   const signupMutation = trpc.auth.signup.useMutation();
 
   const handleDateConfirm = useCallback(() => {
@@ -412,13 +411,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
   },
   welcomeContent: {
     flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    gap: 48,
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 60,
   },
   formContainer: {
     gap: 40,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: "700",
     color: "#fff",
     letterSpacing: -1,
@@ -580,8 +580,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: "80%",
+    padding: 20,
+    maxHeight: "70%",
   },
   datePickerHeader: {
     flexDirection: "row",
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   pickerScroll: {
-    height: 250,
+    height: 200,
     backgroundColor: "#0a0a0a",
     borderRadius: 12,
   },

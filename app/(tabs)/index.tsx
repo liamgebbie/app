@@ -120,17 +120,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingVertical: 12,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 16,
-    justifyContent: "space-between",
+    paddingVertical: 8,
+    justifyContent: "space-around",
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 2,
@@ -150,13 +149,13 @@ const styles = StyleSheet.create({
 
   calorieSection: {
     alignItems: "center",
-    marginBottom: 16,
+    marginVertical: 8,
   },
   circleContainer: {
     position: "relative" as const,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   svg: {
     transform: [{ rotate: "0deg" }],
@@ -181,14 +180,14 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
   },
   macrosSection: {
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginVertical: 8,
   },
   macroRow: {
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     backgroundColor: "#1a1a1a",
     borderRadius: 8,
@@ -203,7 +202,8 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
   },
   actions: {
-    gap: 12,
+    gap: 10,
+    marginTop: 8,
   },
   tellAiButton: {
     flexDirection: "row",
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#000",
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
   },
   tellAiText: {
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#2c2c2e",
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
   },
   showAiText: {

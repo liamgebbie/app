@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, ScanBarcode } from "lucide-react-native";
+import { Home, ScanBarcode, Activity, User } from "lucide-react-native";
 import { Platform } from "react-native";
 
 export default function TabLayout() {
@@ -31,10 +31,24 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="quality"
+        name="eat"
         options={{
-          title: "Quality",
+          title: "Eat",
           tabBarIcon: ({ color, size }) => <ScanBarcode color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="activity"
+        options={{
+          title: "Activity",
+          tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tabs>

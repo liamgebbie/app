@@ -52,7 +52,7 @@ interface MealPreferences {
 
 const MEAL_PREFERENCES_KEY = "meal_preferences";
 
-export default function Quality() {
+export default function Eat() {
   const { profile } = useUser();
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -436,7 +436,7 @@ export default function Quality() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Food Quality</Text>
+          <Text style={styles.title}>Eat</Text>
           <Text style={styles.subtitle}>Understand what you&apos;re eating</Text>
         </View>
 
