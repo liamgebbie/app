@@ -315,6 +315,13 @@ export default function Eat() {
   }, [profile]);
 
   const handleScan = async () => {
+    const firstScanShown = await AsyncStorage.getItem(FIRST_SCAN_KEY);
+    if (!firstScanShown) {
+      setShowFirstScanPopup(true);
+      await AsyncStorage.setItem(FIRST_SCAN_KEY, "true");
+      return;
+    }
+
     if (!permission) {
       return;
     }
@@ -330,6 +337,18 @@ export default function Eat() {
       }
     }
 
+    setShowCamera(true);
+  };
+
+  const proceedToScan = async () => {
+    setShowFirstScanPopup(false);
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert("Permission Required", "Camera permission is needed to scan barcodes");
+        return;
+      }
+    }
     setShowCamera(true);
   };
 
@@ -554,6 +573,52 @@ export default function Eat() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showFirstScanPopup}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowFirstScanPopup(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContent}>
+            <View style={styles.popupIcon}>
+              <ScanBarcode color="#fff" size={48} />
+            </View>
+            <Text style={styles.popupTitle}>How to Get the Best Scan Results</Text>
+            
+            <View style={styles.popupTips}>
+              <View style={styles.tipItem}>
+                <Text style={styles.tipNumber}>1</Text>
+                <Text style={styles.tipText}>Hold your phone steady and ensure good lighting</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <Text style={styles.tipNumber}>2</Text>
+                <Text style={styles.tipText}>Position the barcode in the center of the frame</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <Text style={styles.tipNumber}>3</Text>
+                <Text style={styles.tipText}>Make sure the barcode is clear and not damaged</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <Text style={styles.tipNumber}>4</Text>
+                <Text style={styles.tipText}>Keep the camera about 6-8 inches from the barcode</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.popupButton} onPress={proceedToScan}>
+              <Text style={styles.popupButtonText}>Got it, let's scan!</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.popupSkip}
+              onPress={() => setShowFirstScanPopup(false)}
+            >
+              <Text style={styles.popupSkipText}>Maybe later</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showProductModal}
@@ -1118,5 +1183,84 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     lineHeight: 20,
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    padding: 24,
+  },
+  popupContent: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center" as const,
+  },
+  popupIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#2a2a2a",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    marginBottom: 20,
+  },
+  popupTitle: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: "#fff",
+    textAlign: "center" as const,
+    marginBottom: 24,
+  },
+  popupTips: {
+    width: "100%",
+    gap: 16,
+    marginBottom: 28,
+  },
+  tipItem: {
+    flexDirection: "row" as const,
+    alignItems: "flex-start" as const,
+    gap: 16,
+  },
+  tipNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "700" as const,
+    textAlign: "center" as const,
+    lineHeight: 32,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 15,
+    color: "#ccc",
+    lineHeight: 22,
+  },
+  popupButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center" as const,
+    marginBottom: 12,
+  },
+  popupButtonText: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    color: "#000",
+  },
+  popupSkip: {
+    paddingVertical: 12,
+  },
+  popupSkipText: {
+    fontSize: 14,
+    color: "#999",
   },
 });

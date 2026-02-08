@@ -9,11 +9,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useUser } from "@/contexts/UserContext";
 
 export default function Activity() {
-  const { profile, foodLogs } = useUser();
+  const { profile, foodLogs, weightLogs } = useUser();
 
   if (!profile) {
     return null;
   }
+
+  const getWeightProgress = () => {
+    if (weightLogs.length < 2) {
+      return { progress: 0, change: 0, remaining: 0 };
+    }
+
+    const firstWeight = weightLogs[0].weight;
+    const latestWeight = weightLogs[weightLogs.length - 1].weight;
+    const weightChange = latestWeight - firstWeight;
+
+    const targetChange = profile.goal === "lose" ? -5 : profile.goal === "gain" ? 5 : 0;
+    
+    if (targetChange === 0) {
+      return { progress: 100, change: 0, remaining: 0 };
+    }
+
+    const progress = Math.min(Math.abs(weightChange / targetChange) * 100, 100);
+    const remaining = targetChange - weightChange;
+
+    return { progress, change: weightChange, remaining };
+  };
+
+  const weightProgress = getWeightProgress();
 
   const getDailyStats = () => {
     const now = Date.now();
@@ -108,6 +131,36 @@ export default function Activity() {
           <Text style={styles.title}>Activity</Text>
           <Text style={styles.subtitle}>Track your progress over time</Text>
         </View>
+
+        {profile.goal !== "maintain" && (
+          <View style={styles.progressSection}>
+            <Text style={styles.sectionTitle}>Goal Progress</Text>
+            <View style={styles.progressCard}>
+              <View style={styles.progressHeader}>
+                <Text style={styles.progressLabel}>
+                  {profile.goal === "lose" ? "Weight Lost" : "Weight Gained"}
+                </Text>
+                <Text style={styles.progressValue}>
+                  {Math.abs(weightProgress.change).toFixed(1)} kg of {profile.goal === "lose" ? 5 : 5} kg
+                </Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBarTrack}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      { width: `${weightProgress.progress}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.progressPercentage}>{Math.round(weightProgress.progress)}%</Text>
+              </View>
+              <Text style={styles.progressRemaining}>
+                {Math.abs(weightProgress.remaining).toFixed(1)} kg to go
+              </Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
@@ -272,6 +325,63 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     color: "#999",
+  },
+  progressSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  progressCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  progressLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  progressValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#999",
+  },
+  progressBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+  progressBarTrack: {
+    flex: 1,
+    height: 12,
+    backgroundColor: "#0a0a0a",
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 6,
+  },
+  progressPercentage: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
+    minWidth: 45,
+    textAlign: "right",
+  },
+  progressRemaining: {
+    fontSize: 13,
+    color: "#999",
+    textAlign: "center",
   },
   statsGrid: {
     flexDirection: "row",

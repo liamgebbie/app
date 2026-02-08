@@ -14,20 +14,28 @@ import { useUser } from "@/contexts/UserContext";
 import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
 import { calculateBMI, getBMICategory, calculateProjectedWeight, calculateBMR, calculateTDEE, calculateTargetCalories } from "@/utils/calculations";
 
-type Step = "stats" | "region" | "allergies" | "dietary" | "activity" | "goal" | "macros" | "premium" | "premiumUpsell" | "summary";
+type Step = "stats" | "dateOfBirth" | "region" | "allergies" | "dietary" | "activity" | "goal" | "weightSpeed" | "appleHealth" | "caloriesBurnt" | "rollover" | "notifications" | "macros" | "customCalories" | "premium" | "premiumUpsell" | "loading" | "summary";
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 14;
 const STEP_MAP: Record<Step, number> = {
   stats: 1,
-  region: 2,
-  allergies: 3,
-  dietary: 4,
-  activity: 5,
-  goal: 6,
-  macros: 7,
-  premium: 8,
-  premiumUpsell: 10,
-  summary: 9,
+  dateOfBirth: 2,
+  region: 3,
+  allergies: 4,
+  dietary: 5,
+  activity: 6,
+  goal: 7,
+  weightSpeed: 8,
+  appleHealth: 9,
+  caloriesBurnt: 0,
+  rollover: 10,
+  notifications: 11,
+  macros: 12,
+  customCalories: 0,
+  premium: 13,
+  premiumUpsell: 0,
+  loading: 0,
+  summary: 14,
 };
 
 export default function Onboarding() {
@@ -42,6 +50,7 @@ export default function Onboarding() {
   }, [authToken, router]);
 
   const [age, setAge] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [gender, setGender] = useState<Gender>("male");
@@ -56,6 +65,14 @@ export default function Onboarding() {
   const [isPremium, setIsPremium] = useState(false);
   const [showBMIInfo, setShowBMIInfo] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState<"monthly" | "yearly">("yearly");
+  const [weightSpeed, setWeightSpeed] = useState(0.5);
+  const [hasAppleHealth, setHasAppleHealth] = useState(false);
+  const [caloriesBurntAffectsTarget, setCaloriesBurntAffectsTarget] = useState(false);
+  const [calorieRollover, setCalorieRollover] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [customCalorieGoal, setCustomCalorieGoal] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState("Analyzing your profile...");
 
   const handleComplete = async () => {
     await createProfile({
@@ -81,7 +98,7 @@ export default function Onboarding() {
   };
 
   const handleBack = () => {
-    const stepOrder: Step[] = ["stats", "region", "allergies", "dietary", "activity", "goal", "macros", "premium", "premiumUpsell", "summary"];
+    const stepOrder: Step[] = ["stats", "dateOfBirth", "region", "allergies", "dietary", "activity", "goal", "weightSpeed", "appleHealth", hasAppleHealth ? "caloriesBurnt" : "skip", "rollover", "notifications", "macros", goal === "lose" || goal === "gain" ? "customCalories" : "skip", "premium", isPremium ? "skip" : "premiumUpsell", "loading", "summary"].filter(s => s !== "skip");
     const currentIndex = stepOrder.indexOf(step);
     if (currentIndex > 0) {
       setStep(stepOrder[currentIndex - 1]);
@@ -124,7 +141,7 @@ export default function Onboarding() {
 
 
   if (step === "stats") {
-    const isValid = age && height && weight;
+    const isValid = height && weight;
     const heightLabel = units === "metric" ? "Height (cm)" : "Height (in)";
     const weightLabel = units === "metric" ? "Weight (kg)" : "Weight (lbs)";
     const heightPlaceholder = units === "metric" ? "180" : "71";
@@ -133,25 +150,16 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Stats</Text>
           <Text style={styles.subtitle}>We need some basic information</Text>
 
           <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Age</Text>
-              <TextInput
-                style={styles.input}
-                value={age}
-                onChangeText={setAge}
-                keyboardType="numeric"
-                placeholder="25"
-                placeholderTextColor="#666"
-              />
-            </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Units</Text>
               <View style={styles.buttonRow}>
@@ -261,7 +269,7 @@ export default function Onboarding() {
           )}
           <TouchableOpacity
             style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}
-            onPress={() => isValid && setStep("region")}
+            onPress={() => isValid && setStep("dateOfBirth")}
             disabled={!isValid}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
@@ -269,6 +277,120 @@ export default function Onboarding() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+    );
+  }
+
+  if (step === "dateOfBirth") {
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const getDaysInMonth = (year: number, month: number) => {
+      return new Date(year, month, 0).getDate();
+    };
+    
+    const [selectedYear, setSelectedYear] = useState(parseInt(dateOfBirth.split("-")[0]) || currentYear - 25);
+    const [selectedMonth, setSelectedMonth] = useState(parseInt(dateOfBirth.split("-")[1]) || 1);
+    const [selectedDay, setSelectedDay] = useState(parseInt(dateOfBirth.split("-")[2]) || 1);
+    const days = Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1);
+
+    const handleConfirm = () => {
+      const month = selectedMonth.toString().padStart(2, "0");
+      const day = selectedDay.toString().padStart(2, "0");
+      const dob = `${selectedYear}-${month}-${day}`;
+      setDateOfBirth(dob);
+      const calculatedAge = currentYear - selectedYear;
+      setAge(calculatedAge.toString());
+      setStep("region");
+    };
+
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Date of Birth</Text>
+          <Text style={styles.subtitle}>We need this to calculate your needs</Text>
+
+          <View style={styles.form}>
+            <View style={styles.datePickerInline}>
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Year</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {years.map((year) => (
+                    <TouchableOpacity
+                      key={year}
+                      style={[styles.pickerItem, selectedYear === year && styles.pickerItemSelected]}
+                      onPress={() => setSelectedYear(year)}
+                    >
+                      <Text style={[styles.pickerItemText, selectedYear === year && styles.pickerItemTextSelected]}>
+                        {year}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Month</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {months.map((month) => (
+                    <TouchableOpacity
+                      key={month}
+                      style={[styles.pickerItem, selectedMonth === month && styles.pickerItemSelected]}
+                      onPress={() => {
+                        setSelectedMonth(month);
+                        const maxDays = getDaysInMonth(selectedYear, month);
+                        if (selectedDay > maxDays) {
+                          setSelectedDay(maxDays);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, selectedMonth === month && styles.pickerItemTextSelected]}>
+                        {month.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Day</Text>
+                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+                  {days.map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={[styles.pickerItem, selectedDay === day && styles.pickerItemSelected]}
+                      onPress={() => setSelectedDay(day)}
+                    >
+                      <Text style={[styles.pickerItemText, selectedDay === day && styles.pickerItemTextSelected]}>
+                        {day.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleConfirm}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   }
 
@@ -285,8 +407,11 @@ export default function Onboarding() {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Region</Text>
           <Text style={styles.subtitle}>This helps personalize your experience</Text>
@@ -349,7 +474,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Allergies</Text>
@@ -452,7 +577,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Dietary Preference</Text>
@@ -518,7 +643,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Activity Level</Text>
@@ -582,8 +707,11 @@ export default function Onboarding() {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Goal</Text>
           <Text style={styles.subtitle}>What do you want to achieve?</Text>
@@ -624,9 +752,287 @@ export default function Onboarding() {
           {showStepCounter && (
             <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
           )}
-          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("macros")}>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("weightSpeed")}>
             <Text style={styles.primaryButtonText}>Continue</Text>
             <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === "weightSpeed") {
+    const weightInKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const calculateTimeToGoal = (speed: number) => {
+      if (goal === "maintain") return "Maintaining current weight";
+      const weeklyKgChange = speed;
+      const targetChange = goal === "lose" ? -5 : 5;
+      const weeks = Math.abs(targetChange / weeklyKgChange);
+      const months = Math.round(weeks / 4);
+      return months > 0 ? `${months} month${months !== 1 ? "s" : ""}` : "Less than 1 month";
+    };
+
+    const speedLabels = {
+      0.25: "Slow",
+      0.5: "Moderate",
+      0.75: "Fast",
+      1: "Very Fast",
+    };
+
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Weight Change Speed</Text>
+          <Text style={styles.subtitle}>How fast do you want to {goal === "lose" ? "lose" : "gain"} weight?</Text>
+
+          <View style={styles.form}>
+            <View style={styles.sliderContainer}>
+              <Text style={styles.sliderLabel}>{speedLabels[weightSpeed as keyof typeof speedLabels] || "Moderate"}</Text>
+              <Text style={styles.sliderValue}>{weightSpeed} kg/week</Text>
+              
+              <View style={styles.sliderTrack}>
+                <View style={styles.sliderMarkers}>
+                  {[0.25, 0.5, 0.75, 1].map((val) => (
+                    <TouchableOpacity
+                      key={val}
+                      style={[styles.sliderMarker, weightSpeed === val && styles.sliderMarkerActive]}
+                      onPress={() => setWeightSpeed(val)}
+                    >
+                      <View style={[styles.sliderDot, weightSpeed >= val && styles.sliderDotActive]} />
+                      <Text style={styles.sliderMarkerText}>{val}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.goalTimeCard}>
+              <Text style={styles.goalTimeLabel}>Time to reach goal (-5kg / +5kg)</Text>
+              <Text style={styles.goalTimeValue}>{calculateTimeToGoal(weightSpeed)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>You can adjust this anytime</Text>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("appleHealth")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === "appleHealth") {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Apple Health</Text>
+          <Text style={styles.subtitle}>Connect to sync your activity and health data</Text>
+
+          <View style={styles.form}>
+            <View style={styles.appleHealthCard}>
+              <Text style={styles.appleHealthIcon}>❤️</Text>
+              <Text style={styles.appleHealthTitle}>Connect Apple Health</Text>
+              <Text style={styles.appleHealthDesc}>
+                Sync workouts, steps, and calories burned to get more accurate tracking
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              setHasAppleHealth(true);
+              setStep("caloriesBurnt");
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Connect</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              setHasAppleHealth(false);
+              setStep("rollover");
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Skip for now</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === "caloriesBurnt") {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.content}>
+          <Text style={styles.title}>Calories Burned</Text>
+          <Text style={styles.subtitle}>Should exercise affect your daily calorie goal?</Text>
+
+          <View style={styles.form}>
+            <TouchableOpacity
+              style={[styles.activityCard, caloriesBurntAffectsTarget && styles.activityCardActive]}
+              onPress={() => setCaloriesBurntAffectsTarget(true)}
+            >
+              <Text style={[styles.activityLabel, caloriesBurntAffectsTarget && styles.activityLabelActive]}>
+                Yes, add them
+              </Text>
+              <Text style={[styles.activityDesc, caloriesBurntAffectsTarget && styles.activityDescActive]}>
+                Calories burned from exercise will increase your daily goal
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.activityCard, !caloriesBurntAffectsTarget && styles.activityCardActive]}
+              onPress={() => setCaloriesBurntAffectsTarget(false)}
+            >
+              <Text style={[styles.activityLabel, !caloriesBurntAffectsTarget && styles.activityLabelActive]}>
+                No, keep it fixed
+              </Text>
+              <Text style={[styles.activityDesc, !caloriesBurntAffectsTarget && styles.activityDescActive]}>
+                Daily goal stays the same regardless of exercise
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>You can change this later in settings</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("rollover")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === "rollover") {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Calorie Rollover</Text>
+          <Text style={styles.subtitle}>Balance your calories across days</Text>
+
+          <View style={styles.form}>
+            <TouchableOpacity
+              style={[styles.activityCard, calorieRollover && styles.activityCardActive]}
+              onPress={() => setCalorieRollover(true)}
+            >
+              <Text style={[styles.activityLabel, calorieRollover && styles.activityLabelActive]}>
+                Enable Rollover
+              </Text>
+              <Text style={[styles.activityDesc, calorieRollover && styles.activityDescActive]}>
+                Extra or missing calories roll over to the next day (±250 cal limit)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.activityCard, !calorieRollover && styles.activityCardActive]}
+              onPress={() => setCalorieRollover(false)}
+            >
+              <Text style={[styles.activityLabel, !calorieRollover && styles.activityLabelActive]}>
+                Fresh Start Daily
+              </Text>
+              <Text style={[styles.activityDesc, !calorieRollover && styles.activityDescActive]}>
+                Each day starts with your standard calorie goal
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>This helps maintain consistency</Text>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("notifications")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === "notifications") {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Stay on Track</Text>
+          <Text style={styles.subtitle}>Get reminders to log your meals</Text>
+
+          <View style={styles.form}>
+            <View style={styles.notificationCard}>
+              <Text style={styles.notificationIcon}>🔔</Text>
+              <Text style={styles.notificationTitle}>Enable Notifications</Text>
+              <Text style={styles.notificationDesc}>
+                Receive helpful reminders throughout the day to log your meals and stay consistent
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              setNotificationsEnabled(true);
+              setStep("macros");
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Enable Notifications</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              setNotificationsEnabled(false);
+              setStep("macros");
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Not now</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -645,7 +1051,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Track Macros</Text>
@@ -689,7 +1095,13 @@ export default function Onboarding() {
           )}
           <TouchableOpacity
             style={[styles.primaryButton, trackedMacros.length === 0 && styles.primaryButtonDisabled]}
-            onPress={() => setStep("premium")}
+            onPress={() => {
+              if (goal === "lose" || goal === "gain") {
+                setStep("customCalories");
+              } else {
+                setStep("premium");
+              }
+            }}
             disabled={trackedMacros.length === 0}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
@@ -700,20 +1112,98 @@ export default function Onboarding() {
     );
   }
 
+  if (step === "customCalories") {
+    const weightInKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const heightInCm = units === "imperial" ? parseFloat(height) * 2.54 : parseFloat(height);
+    const bmr = calculateBMR(weightInKg, heightInCm, parseInt(age), gender);
+    const tdee = calculateTDEE(bmr, activityLevel);
+    const suggestedCalories = calculateTargetCalories(tdee, goal);
+
+    const handleUseCustom = () => {
+      const custom = parseInt(customCalorieGoal);
+      if (custom >= 1000 && custom <= 5000) {
+        setStep("premium");
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <ChevronLeft color="#fff" size={18} />
+        </TouchableOpacity>
+        <View style={styles.content}>
+          <Text style={styles.title}>Daily Calorie Goal</Text>
+          <Text style={styles.subtitle}>Choose your target or set a custom goal</Text>
+
+          <View style={styles.form}>
+            <TouchableOpacity
+              style={[styles.activityCard, !customCalorieGoal && styles.activityCardActive]}
+              onPress={() => setCustomCalorieGoal("")}
+            >
+              <Text style={[styles.activityLabel, !customCalorieGoal && styles.activityLabelActive]}>
+                Recommended: {suggestedCalories} cal
+              </Text>
+              <Text style={[styles.activityDesc, !customCalorieGoal && styles.activityDescActive]}>
+                Based on your stats and goals
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.dividerWithText}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Custom Goal</Text>
+              <TextInput
+                style={styles.input}
+                value={customCalorieGoal}
+                onChangeText={setCustomCalorieGoal}
+                keyboardType="numeric"
+                placeholder="Enter custom calories (1000-5000)"
+                placeholderTextColor="#666"
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>You can always adjust this later</Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              if (customCalorieGoal) {
+                handleUseCustom();
+              } else {
+                setStep("premium");
+              }
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   if (step === "premium") {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Go Premium</Text>
           <Text style={styles.subtitle}>Unlock advanced features</Text>
 
           <View style={styles.premiumCard}>
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>7 DAYS FREE</Text>
-            </View>
+            {subscriptionType === "yearly" && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>3 DAYS FREE</Text>
+              </View>
+            )}
             
             <View style={styles.subscriptionToggle}>
               <TouchableOpacity
@@ -728,13 +1218,13 @@ export default function Onboarding() {
               >
                 <Text style={[styles.toggleOptionText, subscriptionType === "yearly" && styles.toggleOptionTextActive]}>Yearly</Text>
                 <View style={styles.saveBadge}>
-                  <Text style={styles.saveBadgeText}>Save £10</Text>
+                  <Text style={styles.saveBadgeText}>Save £35</Text>
                 </View>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.premiumPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£49.99/year"}</Text>
-            <Text style={styles.premiumPriceDesc}>{subscriptionType === "monthly" ? "then £4.99 per month" : "then £49.99 per year"}</Text>
+            <Text style={styles.premiumPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£24.99/year"}</Text>
+            <Text style={styles.premiumPriceDesc}>{subscriptionType === "monthly" ? "Billed monthly" : "then £24.99 per year"}</Text>
 
             <View style={styles.premiumFeatures}>
               <View style={styles.premiumFeature}>
@@ -759,10 +1249,10 @@ export default function Onboarding() {
               style={styles.premiumButton}
               onPress={() => {
                 setIsPremium(true);
-                setStep("summary");
+                setStep("loading");
               }}
             >
-              <Text style={styles.premiumButtonText}>Start Free Trial</Text>
+              <Text style={styles.premiumButtonText}>{subscriptionType === "yearly" ? "Start 3-Day Free Trial" : "Subscribe Now"}</Text>
             </TouchableOpacity>
 
             <Text style={styles.premiumDisclaimer}>
@@ -790,7 +1280,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>You&apos;re Missing Out</Text>
@@ -827,7 +1317,7 @@ export default function Onboarding() {
 
             <View style={styles.upsellPriceBox}>
               <View style={styles.upsellFreeTrialBadge}>
-                <Text style={styles.upsellFreeTrialText}>🎉 7 DAY FREE TRIAL 🎉</Text>
+                <Text style={styles.upsellFreeTrialText}>🎉 3 DAY FREE TRIAL 🎉</Text>
               </View>
               
               <View style={styles.subscriptionToggleSmall}>
@@ -846,18 +1336,18 @@ export default function Onboarding() {
               </View>
 
               <Text style={styles.upsellPriceLabel}>Then only</Text>
-              <Text style={styles.upsellPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£49.99/year"}</Text>
-              <Text style={styles.upsellPriceNote}>{subscriptionType === "yearly" ? "Save £10 per year • " : ""}Cancel anytime, no commitment</Text>
+              <Text style={styles.upsellPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£24.99/year"}</Text>
+              <Text style={styles.upsellPriceNote}>{subscriptionType === "yearly" ? "Save £35 per year • " : ""}Cancel anytime, no commitment</Text>
             </View>
 
             <TouchableOpacity
               style={styles.upsellPremiumButton}
               onPress={() => {
                 setIsPremium(true);
-                setStep("summary");
+                setStep("loading");
               }}
             >
-              <Text style={styles.upsellPremiumButtonText}>Start Free Trial</Text>
+              <Text style={styles.upsellPremiumButtonText}>{subscriptionType === "yearly" ? "Start 3-Day Free Trial" : "Subscribe Now"}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -865,12 +1355,55 @@ export default function Onboarding() {
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.textButton}
-            onPress={() => setStep("summary")}
+            onPress={() => setStep("loading")}
           >
             <Text style={styles.textButtonText}>I&apos;ll stick with free</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+    );
+  }
+
+  if (step === "loading") {
+    useEffect(() => {
+      const steps = [
+        { progress: 20, status: "Analyzing your profile..." },
+        { progress: 40, status: "Calculating calorie needs..." },
+        { progress: 60, status: "Setting up macro targets..." },
+        { progress: 80, status: "Personalizing recommendations..." },
+        { progress: 100, status: "Almost ready..." },
+      ];
+
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        if (currentStep < steps.length) {
+          setLoadingProgress(steps[currentStep].progress);
+          setLoadingStatus(steps[currentStep].status);
+          currentStep++;
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setStep("summary"), 500);
+        }
+      }, 800);
+
+      return () => clearInterval(interval);
+    }, []);
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingTitle}>Setting Up Your Profile</Text>
+          
+          <View style={styles.loadingProgressContainer}>
+            <View style={styles.loadingProgressTrack}>
+              <View style={[styles.loadingProgressFill, { width: `${loadingProgress}%` }]} />
+            </View>
+            <Text style={styles.loadingProgressText}>{loadingProgress}%</Text>
+          </View>
+
+          <Text style={styles.loadingStatus}>{loadingStatus}</Text>
+        </View>
+      </View>
     );
   }
 
@@ -909,7 +1442,7 @@ export default function Onboarding() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={24} />
+          <ChevronLeft color="#fff" size={18} />
         </TouchableOpacity>
         <View style={styles.content}>
           <Text style={styles.title}>Your Profile</Text>
@@ -919,8 +1452,8 @@ export default function Onboarding() {
             <View style={styles.summaryCard}>
               <Text style={styles.summaryCardTitle}>Physical Stats</Text>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Age</Text>
-                <Text style={styles.summaryValue}>{age} years</Text>
+                <Text style={styles.summaryLabel}>Date of Birth</Text>
+                <Text style={styles.summaryValue}>{dateOfBirth}</Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Height</Text>
@@ -1035,7 +1568,7 @@ export default function Onboarding() {
             {isPremium && (
               <View style={[styles.summaryCard, styles.summaryCardPremium]}>
                 <Text style={[styles.summaryCardTitle, { color: "#000" }]}>Premium</Text>
-                <Text style={styles.summaryPremiumText}>7-day free trial active</Text>
+                <Text style={styles.summaryPremiumText}>{subscriptionType === "yearly" ? "3-day free trial active" : "Premium active"}</Text>
               </View>
             )}
           </View>
@@ -1081,9 +1614,9 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
     zIndex: 10,
-    padding: 8,
+    padding: 6,
     backgroundColor: "#1a1a1a",
-    borderRadius: 8,
+    borderRadius: 6,
   },
   welcomeContent: {
     flex: 1,
@@ -1593,5 +2126,216 @@ const styles = StyleSheet.create({
   },
   summaryValueSuccess: {
     color: "#4ade80",
+  },
+  progressBarContainer: {
+    position: "absolute" as const,
+    top: 90,
+    left: 20,
+    right: 20,
+    height: 4,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 2,
+    zIndex: 5,
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 2,
+  },
+  datePickerInline: {
+    flexDirection: "row" as const,
+    gap: 12,
+    height: 240,
+  },
+  pickerColumn: {
+    flex: 1,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: "#999",
+    textAlign: "center" as const,
+    marginBottom: 12,
+  },
+  pickerScroll: {
+    height: 200,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+  },
+  pickerItem: {
+    paddingVertical: 14,
+    alignItems: "center" as const,
+  },
+  pickerItemSelected: {
+    backgroundColor: "#fff",
+  },
+  pickerItemText: {
+    fontSize: 16,
+    color: "#999",
+  },
+  pickerItemTextSelected: {
+    color: "#000",
+    fontWeight: "700" as const,
+  },
+  sliderContainer: {
+    gap: 16,
+  },
+  sliderLabel: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: "#fff",
+    textAlign: "center" as const,
+  },
+  sliderValue: {
+    fontSize: 16,
+    color: "#999",
+    textAlign: "center" as const,
+  },
+  sliderTrack: {
+    paddingVertical: 20,
+  },
+  sliderMarkers: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 20,
+  },
+  sliderMarker: {
+    alignItems: "center" as const,
+    gap: 8,
+  },
+  sliderMarkerActive: {
+    opacity: 1,
+  },
+  sliderDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#1a1a1a",
+    borderWidth: 2,
+    borderColor: "#666",
+  },
+  sliderDotActive: {
+    backgroundColor: "#fff",
+    borderColor: "#fff",
+  },
+  sliderMarkerText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  goalTimeCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center" as const,
+  },
+  goalTimeLabel: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 8,
+  },
+  goalTimeValue: {
+    fontSize: 24,
+    fontWeight: "700" as const,
+    color: "#fff",
+  },
+  appleHealthCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 32,
+    alignItems: "center" as const,
+  },
+  appleHealthIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  appleHealthTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: "#fff",
+    marginBottom: 12,
+  },
+  appleHealthDesc: {
+    fontSize: 15,
+    color: "#999",
+    textAlign: "center" as const,
+    lineHeight: 22,
+  },
+  notificationCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 32,
+    alignItems: "center" as const,
+  },
+  notificationIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  notificationTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: "#fff",
+    marginBottom: 12,
+  },
+  notificationDesc: {
+    fontSize: 15,
+    color: "#999",
+    textAlign: "center" as const,
+    lineHeight: 22,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    padding: 40,
+  },
+  loadingTitle: {
+    fontSize: 28,
+    fontWeight: "700" as const,
+    color: "#fff",
+    marginBottom: 48,
+    textAlign: "center" as const,
+  },
+  loadingProgressContainer: {
+    width: "100%",
+    alignItems: "center" as const,
+    gap: 12,
+  },
+  loadingProgressTrack: {
+    width: "100%",
+    height: 8,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 4,
+    overflow: "hidden" as const,
+  },
+  loadingProgressFill: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 4,
+  },
+  loadingProgressText: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: "#fff",
+  },
+  loadingStatus: {
+    fontSize: 16,
+    color: "#999",
+    marginTop: 32,
+    textAlign: "center" as const,
+  },
+  dividerWithText: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
+    paddingVertical: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#333",
+  },
+  dividerText: {
+    fontSize: 14,
+    color: "#666",
   },
 });
