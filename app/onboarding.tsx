@@ -73,6 +73,11 @@ export default function Onboarding() {
   const [customCalorieGoal, setCustomCalorieGoal] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStatus, setLoadingStatus] = useState("Analyzing your profile...");
+  
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear - 25);
+  const [selectedMonth, setSelectedMonth] = useState(1);
+  const [selectedDay, setSelectedDay] = useState(1);
 
   const handleComplete = async () => {
     await createProfile({
@@ -281,16 +286,11 @@ export default function Onboarding() {
   }
 
   if (step === "dateOfBirth") {
-    const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     const getDaysInMonth = (year: number, month: number) => {
       return new Date(year, month, 0).getDate();
     };
-    
-    const [selectedYear, setSelectedYear] = useState(parseInt(dateOfBirth.split("-")[0]) || currentYear - 25);
-    const [selectedMonth, setSelectedMonth] = useState(parseInt(dateOfBirth.split("-")[1]) || 1);
-    const [selectedDay, setSelectedDay] = useState(parseInt(dateOfBirth.split("-")[2]) || 1);
     const days = Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1);
 
     const handleConfirm = () => {
