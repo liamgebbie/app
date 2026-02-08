@@ -72,6 +72,22 @@ export default function Dashboard() {
     return date.toDateString() === today.toDateString();
   };
 
+  const isYesterday = (date: Date) => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return date.toDateString() === yesterday.toDateString();
+  };
+
+  const getDateLabel = (date: Date) => {
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const canNavigateNext = () => {
     const tomorrow = new Date(selectedDate);
     tomorrow.setDate(selectedDate.getDate() + 1);
@@ -91,11 +107,7 @@ export default function Dashboard() {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * caloriesPercent) / 100;
 
-  const dateString = selectedDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const dateLabel = getDateLabel(selectedDate);
 
   const handleDeleteLog = (id: string, description: string) => {
     Alert.alert(
@@ -115,8 +127,8 @@ export default function Dashboard() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.title}>{isToday(selectedDate) ? "Today" : dateString}</Text>
+        <View style={styles.headerTitleRow}>
+          <Text style={styles.title}>{dateLabel}</Text>
           <View style={styles.dateNavigation}>
             <TouchableOpacity
               style={styles.navButton}
@@ -124,7 +136,6 @@ export default function Dashboard() {
             >
               <ChevronLeft color="#fff" size={20} />
             </TouchableOpacity>
-            <Text style={styles.date}>{dateString}</Text>
             <TouchableOpacity
               style={[styles.navButton, !canNavigateNext() && styles.navButtonDisabled]}
               onPress={() => navigateDate('next')}
@@ -244,9 +255,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
-  headerLeft: {
+  headerTitleRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
     flex: 1,
   },
   content: {
@@ -258,12 +272,11 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "700" as const,
     color: "#fff",
-    marginBottom: 8,
   },
   dateNavigation: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
-    gap: 12,
+    gap: 8,
   },
   navButton: {
     width: 32,
@@ -275,10 +288,6 @@ const styles = StyleSheet.create({
   },
   navButtonDisabled: {
     opacity: 0.3,
-  },
-  date: {
-    fontSize: 14,
-    color: "#8e8e93",
   },
   profileButton: {
     width: 44,
