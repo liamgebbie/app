@@ -62,7 +62,9 @@ export default function Dashboard() {
     newDate.setDate(selectedDate.getDate() + (direction === 'next' ? 1 : -1));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (newDate <= today) {
+    const newDateNormalized = new Date(newDate);
+    newDateNormalized.setHours(0, 0, 0, 0);
+    if (newDateNormalized <= today) {
       setSelectedDate(newDate);
     }
   };
@@ -91,6 +93,7 @@ export default function Dashboard() {
   const canNavigateNext = () => {
     const tomorrow = new Date(selectedDate);
     tomorrow.setDate(selectedDate.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return tomorrow <= today;
@@ -127,24 +130,22 @@ export default function Dashboard() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigateDate('prev')}
+        >
+          <ChevronLeft color="#fff" size={20} />
+        </TouchableOpacity>
         <View style={styles.headerTitleRow}>
           <Text style={styles.title}>{dateLabel}</Text>
-          <View style={styles.dateNavigation}>
-            <TouchableOpacity
-              style={styles.navButton}
-              onPress={() => navigateDate('prev')}
-            >
-              <ChevronLeft color="#fff" size={20} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.navButton, !canNavigateNext() && styles.navButtonDisabled]}
-              onPress={() => navigateDate('next')}
-              disabled={!canNavigateNext()}
-            >
-              <ChevronRight color="#fff" size={20} />
-            </TouchableOpacity>
-          </View>
         </View>
+        <TouchableOpacity
+          style={[styles.navButton, !canNavigateNext() && styles.navButtonDisabled]}
+          onPress={() => navigateDate('next')}
+          disabled={!canNavigateNext()}
+        >
+          <ChevronRight color="#fff" size={20} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.profileButton} onPress={() => router.push("/progress")}>
           <User color="#fff" size={24} />
         </TouchableOpacity>
@@ -256,12 +257,11 @@ const styles = StyleSheet.create({
     alignItems: "center" as const,
     paddingHorizontal: 24,
     paddingVertical: 16,
+    gap: 12,
   },
   headerTitleRow: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 12,
     flex: 1,
+    alignItems: "center" as const,
   },
   content: {
     paddingHorizontal: 24,
@@ -273,11 +273,7 @@ const styles = StyleSheet.create({
     fontWeight: "700" as const,
     color: "#fff",
   },
-  dateNavigation: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 8,
-  },
+
   navButton: {
     width: 32,
     height: 32,

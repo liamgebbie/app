@@ -185,14 +185,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Stats</Text>
           <Text style={styles.subtitle}>We need some basic information</Text>
@@ -338,14 +340,16 @@ export default function Onboarding() {
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Date of Birth</Text>
           <Text style={styles.subtitle}>We need this to calculate your needs</Text>
@@ -441,14 +445,16 @@ export default function Onboarding() {
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Region</Text>
           <Text style={styles.subtitle}>This helps personalize your experience</Text>
@@ -510,14 +516,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Allergies</Text>
           <Text style={styles.subtitle}>Help us keep you safe</Text>
@@ -618,14 +626,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Dietary Preference</Text>
           <Text style={styles.subtitle}>How do you like to eat?</Text>
@@ -689,14 +699,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Activity Level</Text>
           <Text style={styles.subtitle}>How often do you train?</Text>
@@ -774,14 +786,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Goal</Text>
           <Text style={styles.subtitle}>What do you want to achieve?</Text>
@@ -868,14 +882,16 @@ export default function Onboarding() {
   if (step === "appleHealth") {
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Apple Health</Text>
           <Text style={styles.subtitle}>Connect to sync your activity and health data</Text>
@@ -922,14 +938,16 @@ export default function Onboarding() {
   if (step === "caloriesBurnt") {
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Calories Burned</Text>
           <Text style={styles.subtitle}>Should exercise affect your daily calorie goal?</Text>
@@ -975,14 +993,16 @@ export default function Onboarding() {
   if (step === "rollover") {
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Calorie Rollover</Text>
           <Text style={styles.subtitle}>Balance your calories across days</Text>
@@ -1031,14 +1051,16 @@ export default function Onboarding() {
   if (step === "notifications") {
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Stay on Track</Text>
           <Text style={styles.subtitle}>Get reminders to log your meals</Text>
@@ -1093,14 +1115,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Track Macros</Text>
           <Text style={styles.subtitle}>Selected macros will be tracked in your dashboard</Text>
@@ -1159,14 +1183,16 @@ export default function Onboarding() {
   if (step === "premium") {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Go Premium</Text>
           <Text style={styles.subtitle}>Unlock advanced features</Text>
@@ -1252,14 +1278,16 @@ export default function Onboarding() {
   if (step === "premiumUpsell") {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>You&apos;re Missing Out</Text>
           <Text style={styles.subtitle}>Premium users see 3x better results</Text>
@@ -1395,14 +1423,16 @@ export default function Onboarding() {
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <ChevronLeft color="#fff" size={18} />
-        </TouchableOpacity>
-        {showProgressBar && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
-          </View>
-        )}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>Your Profile</Text>
           <Text style={styles.subtitle}>Here&apos;s what we&apos;ve learned about you</Text>
@@ -1568,11 +1598,15 @@ const styles = StyleSheet.create({
     paddingTop: 110,
     paddingBottom: 20,
   },
-  backButton: {
-    position: "absolute" as const,
-    top: 50,
-    left: 20,
+  topBar: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    gap: 12,
     zIndex: 10,
+  },
+  backButton: {
     padding: 6,
     backgroundColor: "#1a1a1a",
     borderRadius: 6,
@@ -2087,14 +2121,10 @@ const styles = StyleSheet.create({
     color: "#4ade80",
   },
   progressBarContainer: {
-    position: "absolute" as const,
-    top: 80,
-    left: 20,
-    right: 20,
+    flex: 1,
     height: 4,
     backgroundColor: "#1a1a1a",
     borderRadius: 2,
-    zIndex: 5,
   },
   progressBar: {
     height: "100%",
