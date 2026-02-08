@@ -79,6 +79,32 @@ export default function Onboarding() {
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
 
+  useEffect(() => {
+    if (step !== "loading") return;
+    
+    const steps = [
+      { progress: 20, status: "Analyzing your profile..." },
+      { progress: 40, status: "Calculating calorie needs..." },
+      { progress: 60, status: "Setting up macro targets..." },
+      { progress: 80, status: "Personalizing recommendations..." },
+      { progress: 100, status: "Almost ready..." },
+    ];
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        setLoadingProgress(steps[currentStep].progress);
+        setLoadingStatus(steps[currentStep].status);
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => setStep("summary"), 500);
+      }
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [step]);
+
   const handleComplete = async () => {
     await createProfile({
       age: parseInt(age),
@@ -1365,30 +1391,6 @@ export default function Onboarding() {
   }
 
   if (step === "loading") {
-    useEffect(() => {
-      const steps = [
-        { progress: 20, status: "Analyzing your profile..." },
-        { progress: 40, status: "Calculating calorie needs..." },
-        { progress: 60, status: "Setting up macro targets..." },
-        { progress: 80, status: "Personalizing recommendations..." },
-        { progress: 100, status: "Almost ready..." },
-      ];
-
-      let currentStep = 0;
-      const interval = setInterval(() => {
-        if (currentStep < steps.length) {
-          setLoadingProgress(steps[currentStep].progress);
-          setLoadingStatus(steps[currentStep].status);
-          currentStep++;
-        } else {
-          clearInterval(interval);
-          setTimeout(() => setStep("summary"), 500);
-        }
-      }, 800);
-
-      return () => clearInterval(interval);
-    }, []);
-
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
