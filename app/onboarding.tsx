@@ -1595,7 +1595,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 110,
+    paddingTop: 55,
     paddingBottom: 20,
   },
   topBar: {

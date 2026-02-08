@@ -273,8 +273,9 @@ const styles = StyleSheet.create({
   headerTitleRow: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
-    gap: 8,
+    gap: 12,
     flex: 1,
+    justifyContent: "flex-start" as const,
   },
   content: {
     paddingHorizontal: 24,
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2c2c2e",
     alignItems: "center" as const,
     justifyContent: "center" as const,
+    marginRight: 4,
   },
   navButtonDisabled: {
     opacity: 0.3,
