@@ -79,11 +79,14 @@ export const [UserProvider, useUser] = createContextHook(() => {
     await AsyncStorage.setItem(WEIGHT_LOGS_KEY, JSON.stringify(newWeightLogs));
   };
 
-  const addFoodLog = async (log: Omit<FoodLog, "id" | "timestamp">) => {
+  const addFoodLog = async (log: Omit<FoodLog, "id" | "timestamp">, date?: Date) => {
+    const logDate = date || new Date();
+    const timestamp = logDate.getTime();
+    
     const newLog: FoodLog = {
       ...log,
       id: Date.now().toString(),
-      timestamp: Date.now(),
+      timestamp,
     };
 
     const updatedLogs = [newLog, ...foodLogs];

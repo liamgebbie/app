@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useState } from "react";
 import {
@@ -28,10 +28,13 @@ const foodSchema = z.object({
 
 export default function LogFood() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { addFoodLog } = useUser();
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedFood, setParsedFood] = useState<z.infer<typeof foodSchema> | null>(null);
+  
+  const selectedDate = params.date ? new Date(params.date as string) : undefined;
 
   const handleParse = async () => {
     if (!input.trim()) return;
@@ -61,7 +64,7 @@ export default function LogFood() {
   const handleSave = async () => {
     if (!parsedFood) return;
 
-    await addFoodLog(parsedFood);
+    await addFoodLog(parsedFood, selectedDate);
     router.back();
   };
 

@@ -200,11 +200,23 @@ export default function Dashboard() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.tellAiButton} onPress={() => router.push("/log-food")}>
+          <TouchableOpacity 
+            style={styles.tellAiButton} 
+            onPress={() => router.push({
+              pathname: "/log-food",
+              params: { date: selectedDate.toISOString() }
+            })}
+          >
             <Sparkles color="#fff" size={20} />
             <Text style={styles.tellAiText}>Tell AI</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.showAiButton} onPress={() => router.push("/show-ai")}>
+          <TouchableOpacity 
+            style={styles.showAiButton} 
+            onPress={() => router.push({
+              pathname: "/show-ai",
+              params: { date: selectedDate.toISOString() }
+            })}
+          >
             <Camera color="#fff" size={20} />
             <Text style={styles.showAiText}>Show AI</Text>
           </TouchableOpacity>
@@ -257,11 +269,12 @@ const styles = StyleSheet.create({
     alignItems: "center" as const,
     paddingHorizontal: 24,
     paddingVertical: 16,
-    gap: 12,
   },
   headerTitleRow: {
-    flex: 1,
+    flexDirection: "row" as const,
     alignItems: "center" as const,
+    gap: 8,
+    flex: 1,
   },
   content: {
     paddingHorizontal: 24,
