@@ -444,7 +444,7 @@ export default function Onboarding() {
     ];
 
     return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <ChevronLeft color="#fff" size={18} />
@@ -496,7 +496,7 @@ export default function Onboarding() {
             <ArrowRight color="#000" size={20} />
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
