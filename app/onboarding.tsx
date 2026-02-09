@@ -79,6 +79,32 @@ export default function Onboarding() {
   const [selectedDay, setSelectedDay] = useState(1);
 
   useEffect(() => {
+    if (step === "goal" && weight && !targetWeight) {
+      const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+      if (goal === "lose") {
+        setTargetWeight((currentWeightKg - 10).toFixed(1));
+      } else if (goal === "gain") {
+        setTargetWeight((currentWeightKg + 5).toFixed(1));
+      } else {
+        setTargetWeight(currentWeightKg.toFixed(1));
+      }
+    }
+  }, [step, goal, weight, units, targetWeight]);
+
+  useEffect(() => {
+    if (weight && targetWeight) {
+      const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+      const targetWeightKg = parseFloat(targetWeight);
+      
+      if (goal === "lose" && targetWeightKg >= currentWeightKg) {
+        setTargetWeight((currentWeightKg - 5).toFixed(1));
+      } else if (goal === "gain" && targetWeightKg <= currentWeightKg) {
+        setTargetWeight((currentWeightKg + 5).toFixed(1));
+      }
+    }
+  }, [goal, weight, units, targetWeight]);
+
+  useEffect(() => {
     if (step !== "loading") return;
     
     const steps = [
@@ -848,50 +874,69 @@ export default function Onboarding() {
                 <Text style={styles.sectionTitle}>Target Weight</Text>
                 <Text style={styles.sectionSubtitle}>What weight do you want to reach?</Text>
                 
-                <View style={styles.targetWeightSliderContainer}>
-                  <Text style={styles.targetWeightValue}>{getTargetWeightDisplay(targetWeightValue)}</Text>
-                  <View style={styles.targetWeightSliderTrack}>
-                    <View style={styles.targetWeightSliderFill} />
-                    {Array.from({ length: 21 }, (_, i) => {
-                      const stepWeight = minTargetWeight + (i * (maxTargetWeight - minTargetWeight) / 20);
-                      const isSelected = Math.abs(targetWeightValue - stepWeight) < (maxTargetWeight - minTargetWeight) / 40;
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          style={[styles.targetWeightSliderDot, isSelected && styles.targetWeightSliderDotActive]}
-                          onPress={() => setTargetWeight(stepWeight.toFixed(1))}
-                        />
-                      );
-                    })}
+                <View style={styles.targetWeightInputContainer}>
+                  <TouchableOpacity
+                    style={styles.weightAdjustButton}
+                    onPress={() => {
+                      const decrement = units === "imperial" ? 0.453592 : 0.5;
+                      const newWeight = targetWeightValue - decrement;
+                      if (goal === "lose" && newWeight >= minTargetWeight) {
+                        setTargetWeight(newWeight.toFixed(1));
+                      } else if (goal === "gain" && newWeight > currentWeightKg) {
+                        setTargetWeight(newWeight.toFixed(1));
+                      }
+                    }}
+                  >
+                    <Text style={styles.weightAdjustButtonText}>-</Text>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.targetWeightDisplay}>
+                    <Text style={styles.targetWeightValue}>{getTargetWeightDisplay(targetWeightValue)}</Text>
                   </View>
-                  <View style={styles.targetWeightSliderLabels}>
-                    <Text style={styles.targetWeightSliderLabel}>{getTargetWeightDisplay(minTargetWeight)}</Text>
-                    <Text style={styles.targetWeightSliderLabel}>{getTargetWeightDisplay(maxTargetWeight)}</Text>
-                  </View>
+                  
+                  <TouchableOpacity
+                    style={styles.weightAdjustButton}
+                    onPress={() => {
+                      const increment = units === "imperial" ? 0.453592 : 0.5;
+                      const newWeight = targetWeightValue + increment;
+                      if (goal === "lose" && newWeight < currentWeightKg) {
+                        setTargetWeight(newWeight.toFixed(1));
+                      } else if (goal === "gain" && newWeight <= maxTargetWeight) {
+                        setTargetWeight(newWeight.toFixed(1));
+                      }
+                    }}
+                  >
+                    <Text style={styles.weightAdjustButtonText}>+</Text>
+                  </TouchableOpacity>
                 </View>
 
                 <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Weight Change Speed</Text>
                 <Text style={styles.sectionSubtitle}>How fast do you want to {goal === "lose" ? "lose" : "gain"} weight?</Text>
                 
-                <View style={styles.sliderContainer}>
-                  <Text style={styles.sliderLabel}>{speedLabels[weightSpeed as keyof typeof speedLabels] || "Moderate"}</Text>
-                  <Text style={styles.sliderValue}>{weightSpeed} kg/week</Text>
-                  
-                  <View style={styles.speedSliderTrack}>
-                    <View style={[styles.speedSliderFill, { width: `${((weightSpeed - 0.25) / 0.75) * 100}%` }]} />
-                    {[0.25, 0.5, 0.75, 1].map((val) => (
-                      <TouchableOpacity
-                        key={val}
-                        style={[styles.speedSliderDot, weightSpeed === val && styles.speedSliderDotActive]}
-                        onPress={() => setWeightSpeed(val)}
-                      />
-                    ))}
-                  </View>
-                  <View style={styles.speedSliderLabels}>
-                    {[0.25, 0.5, 0.75, 1].map((val) => (
-                      <Text key={val} style={styles.speedSliderLabel}>{val}</Text>
-                    ))}
-                  </View>
+                <View style={styles.speedButtonsContainer}>
+                  {[0.25, 0.5, 0.75, 1].map((speed) => (
+                    <TouchableOpacity
+                      key={speed}
+                      style={[
+                        styles.speedButton,
+                        weightSpeed === speed && styles.speedButtonActive,
+                      ]}
+                      onPress={() => setWeightSpeed(speed)}
+                    >
+                      <Text style={[
+                        styles.speedButtonLabel,
+                        weightSpeed === speed && styles.speedButtonLabelActive,
+                      ]}>
+                        {speedLabels[speed as keyof typeof speedLabels]}
+                      </Text>
+                      <Text style={[
+                        styles.speedButtonValue,
+                        weightSpeed === speed && styles.speedButtonValueActive,
+                      ]}>
+                        {speed} kg/week
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
 
                 <View style={styles.goalTimeCard}>
@@ -2443,5 +2488,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     marginTop: -8,
+  },
+  targetWeightInputContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 16,
+    marginTop: 8,
+  },
+  weightAdjustButton: {
+    width: 56,
+    height: 56,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 28,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  weightAdjustButtonText: {
+    fontSize: 28,
+    fontWeight: "700" as const,
+    color: "#fff",
+  },
+  targetWeightDisplay: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    paddingVertical: 20,
+  },
+  speedButtonsContainer: {
+    gap: 12,
+    marginTop: 8,
+  },
+  speedButton: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center" as const,
+  },
+  speedButtonActive: {
+    backgroundColor: "#fff",
+  },
+  speedButtonLabel: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: "#fff",
+    marginBottom: 4,
+  },
+  speedButtonLabelActive: {
+    color: "#000",
+  },
+  speedButtonValue: {
+    fontSize: 14,
+    color: "#999",
+  },
+  speedButtonValueActive: {
+    color: "#666",
   },
 });
