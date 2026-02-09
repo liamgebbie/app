@@ -64,6 +64,7 @@ export default function Onboarding() {
   const [showBMIInfo, setShowBMIInfo] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState<"monthly" | "yearly">("yearly");
   const [weightSpeed, setWeightSpeed] = useState(0.5);
+  const [targetWeight, setTargetWeight] = useState("");
   const [hasAppleHealth, setHasAppleHealth] = useState(false);
   const [caloriesBurntAffectsTarget, setCaloriesBurntAffectsTarget] = useState(false);
   const [calorieRollover, setCalorieRollover] = useState(false);
@@ -768,6 +769,11 @@ export default function Onboarding() {
       { value: "gain", label: "Build Muscle", desc: "+300 cal surplus" },
     ];
 
+    const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const minTargetWeight = Math.max(40, currentWeightKg - 50);
+    const maxTargetWeight = currentWeightKg + 10;
+    const targetWeightValue = targetWeight ? parseFloat(targetWeight) : currentWeightKg;
+
     const speedLabels = {
       0.25: "Slow",
       0.5: "Moderate",
@@ -778,10 +784,18 @@ export default function Onboarding() {
     const calculateTimeToGoal = (speed: number) => {
       if (goal === "maintain") return "Maintaining current weight";
       const weeklyKgChange = speed;
-      const targetChange = goal === "lose" ? -5 : 5;
+      const targetChange = targetWeightValue - currentWeightKg;
+      if (Math.abs(targetChange) < 0.5) return "Already at target";
       const weeks = Math.abs(targetChange / weeklyKgChange);
       const months = Math.round(weeks / 4);
       return months > 0 ? `${months} month${months !== 1 ? "s" : ""}` : "Less than 1 month";
+    };
+
+    const getTargetWeightDisplay = (kg: number) => {
+      if (units === "imperial") {
+        return `${(kg / 0.453592).toFixed(1)} lbs`;
+      }
+      return `${kg.toFixed(1)} kg`;
     };
 
     return (
@@ -831,31 +845,57 @@ export default function Onboarding() {
 
             {goal !== "maintain" && (
               <View style={styles.weightSpeedSection}>
-                <Text style={styles.sectionTitle}>Weight Change Speed</Text>
+                <Text style={styles.sectionTitle}>Target Weight</Text>
+                <Text style={styles.sectionSubtitle}>What weight do you want to reach?</Text>
+                
+                <View style={styles.targetWeightSliderContainer}>
+                  <Text style={styles.targetWeightValue}>{getTargetWeightDisplay(targetWeightValue)}</Text>
+                  <View style={styles.targetWeightSliderTrack}>
+                    <View style={styles.targetWeightSliderFill} />
+                    {Array.from({ length: 21 }, (_, i) => {
+                      const stepWeight = minTargetWeight + (i * (maxTargetWeight - minTargetWeight) / 20);
+                      const isSelected = Math.abs(targetWeightValue - stepWeight) < (maxTargetWeight - minTargetWeight) / 40;
+                      return (
+                        <TouchableOpacity
+                          key={i}
+                          style={[styles.targetWeightSliderDot, isSelected && styles.targetWeightSliderDotActive]}
+                          onPress={() => setTargetWeight(stepWeight.toFixed(1))}
+                        />
+                      );
+                    })}
+                  </View>
+                  <View style={styles.targetWeightSliderLabels}>
+                    <Text style={styles.targetWeightSliderLabel}>{getTargetWeightDisplay(minTargetWeight)}</Text>
+                    <Text style={styles.targetWeightSliderLabel}>{getTargetWeightDisplay(maxTargetWeight)}</Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Weight Change Speed</Text>
                 <Text style={styles.sectionSubtitle}>How fast do you want to {goal === "lose" ? "lose" : "gain"} weight?</Text>
                 
                 <View style={styles.sliderContainer}>
                   <Text style={styles.sliderLabel}>{speedLabels[weightSpeed as keyof typeof speedLabels] || "Moderate"}</Text>
                   <Text style={styles.sliderValue}>{weightSpeed} kg/week</Text>
                   
-                  <View style={styles.sliderTrack}>
-                    <View style={styles.sliderMarkers}>
-                      {[0.25, 0.5, 0.75, 1].map((val) => (
-                        <TouchableOpacity
-                          key={val}
-                          style={[styles.sliderMarker, weightSpeed === val && styles.sliderMarkerActive]}
-                          onPress={() => setWeightSpeed(val)}
-                        >
-                          <View style={[styles.sliderDot, weightSpeed >= val && styles.sliderDotActive]} />
-                          <Text style={styles.sliderMarkerText}>{val}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+                  <View style={styles.speedSliderTrack}>
+                    <View style={[styles.speedSliderFill, { width: `${((weightSpeed - 0.25) / 0.75) * 100}%` }]} />
+                    {[0.25, 0.5, 0.75, 1].map((val) => (
+                      <TouchableOpacity
+                        key={val}
+                        style={[styles.speedSliderDot, weightSpeed === val && styles.speedSliderDotActive]}
+                        onPress={() => setWeightSpeed(val)}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.speedSliderLabels}>
+                    {[0.25, 0.5, 0.75, 1].map((val) => (
+                      <Text key={val} style={styles.speedSliderLabel}>{val}</Text>
+                    ))}
                   </View>
                 </View>
 
                 <View style={styles.goalTimeCard}>
-                  <Text style={styles.goalTimeLabel}>Time to reach goal (-5kg / +5kg)</Text>
+                  <Text style={styles.goalTimeLabel}>Time to reach your target weight</Text>
                   <Text style={styles.goalTimeValue}>{calculateTimeToGoal(weightSpeed)}</Text>
                 </View>
               </View>
@@ -2180,36 +2220,95 @@ const styles = StyleSheet.create({
     color: "#999",
     textAlign: "center" as const,
   },
-  sliderTrack: {
-    paddingVertical: 20,
+  targetWeightSliderContainer: {
+    gap: 16,
   },
-  sliderMarkers: {
+  targetWeightValue: {
+    fontSize: 32,
+    fontWeight: "700" as const,
+    color: "#fff",
+    textAlign: "center" as const,
+  },
+  targetWeightSliderTrack: {
+    height: 48,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 24,
+    position: "relative" as const,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 8,
+  },
+  targetWeightSliderFill: {
+    position: "absolute" as const,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "#2a2a2a",
+    borderRadius: 24,
+  },
+  targetWeightSliderDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#666",
+    zIndex: 1,
+  },
+  targetWeightSliderDotActive: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+  },
+  targetWeightSliderLabels: {
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
-    paddingHorizontal: 20,
   },
-  sliderMarker: {
+  targetWeightSliderLabel: {
+    fontSize: 12,
+    color: "#666",
+  },
+  speedSliderTrack: {
+    height: 48,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 24,
+    position: "relative" as const,
+    flexDirection: "row" as const,
     alignItems: "center" as const,
-    gap: 8,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 8,
   },
-  sliderMarkerActive: {
-    opacity: 1,
+  speedSliderFill: {
+    position: "absolute" as const,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#2a2a2a",
+    borderRadius: 24,
   },
-  sliderDot: {
+  speedSliderDot: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#1a1a1a",
-    borderWidth: 2,
-    borderColor: "#666",
+    backgroundColor: "#666",
+    zIndex: 1,
   },
-  sliderDotActive: {
+  speedSliderDotActive: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: "#fff",
-    borderColor: "#fff",
   },
-  sliderMarkerText: {
+  speedSliderLabels: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+  },
+  speedSliderLabel: {
     fontSize: 12,
     color: "#666",
+    flex: 1,
+    textAlign: "center" as const,
   },
   goalTimeCard: {
     backgroundColor: "#1a1a1a",
