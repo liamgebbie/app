@@ -51,6 +51,7 @@ interface MealPreferences {
 }
 
 const MEAL_PREFERENCES_KEY = "meal_preferences";
+const FIRST_SCAN_KEY = "first_scan_shown";
 
 export default function Eat() {
   const { profile } = useUser();
@@ -58,6 +59,7 @@ export default function Eat() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedConcern, setSelectedConcern] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [showFirstScanPopup, setShowFirstScanPopup] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [mealPreferences, setMealPreferences] = useState<MealPreferences>({ liked: [], disliked: [] });
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
