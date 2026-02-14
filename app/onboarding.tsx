@@ -1307,7 +1307,7 @@ export default function Onboarding() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.premiumPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "£24.99/year"}</Text>
+            <Text style={styles.premiumPrice}>{subscriptionType === "monthly" ? "£4.99/month" : "3 Days Free"}</Text>
             <Text style={styles.premiumPriceDesc}>{subscriptionType === "monthly" ? "Billed monthly" : "then £24.99 per year"}</Text>
 
             <View style={styles.premiumFeatures}>
