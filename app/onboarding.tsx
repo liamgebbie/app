@@ -14,9 +14,9 @@ import { useUser } from "@/contexts/UserContext";
 import { ActivityLevel, DietaryPreference, Gender, Goal, TrackedMacro, Units } from "@/types/user";
 import { calculateBMI, getBMICategory, calculateProjectedWeight, calculateBMR, calculateTDEE, calculateTargetCalories } from "@/utils/calculations";
 
-type Step = "stats" | "dateOfBirth" | "region" | "allergies" | "dietary" | "activity" | "goal" | "appleHealth" | "caloriesBurnt" | "rollover" | "notifications" | "macros" | "premium" | "premiumUpsell" | "loading" | "summary";
+type Step = "stats" | "dateOfBirth" | "region" | "allergies" | "dietary" | "activity" | "goal" | "targetWeight" | "weightSpeed" | "appleHealth" | "caloriesBurnt" | "rollover" | "notifications" | "macros" | "premium" | "premiumUpsell" | "loading" | "summary";
 
-const TOTAL_STEPS = 13;
+const TOTAL_STEPS = 15;
 const STEP_MAP: Record<Step, number> = {
   stats: 1,
   dateOfBirth: 2,
@@ -25,15 +25,17 @@ const STEP_MAP: Record<Step, number> = {
   dietary: 5,
   activity: 6,
   goal: 7,
-  appleHealth: 8,
+  targetWeight: 8,
+  weightSpeed: 9,
+  appleHealth: 10,
   caloriesBurnt: 0,
-  rollover: 9,
-  notifications: 10,
-  macros: 11,
-  premium: 12,
+  rollover: 11,
+  notifications: 12,
+  macros: 13,
+  premium: 14,
   premiumUpsell: 0,
   loading: 0,
-  summary: 13,
+  summary: 15,
 };
 
 export default function Onboarding() {
@@ -79,7 +81,7 @@ export default function Onboarding() {
   const [selectedDay, setSelectedDay] = useState(1);
 
   useEffect(() => {
-    if (step === "goal" && weight && !targetWeight) {
+    if ((step === "goal" || step === "targetWeight") && weight && !targetWeight) {
       const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
       if (goal === "lose") {
         setTargetWeight((currentWeightKg - 10).toFixed(1));
@@ -160,7 +162,7 @@ export default function Onboarding() {
   };
 
   const handleBack = () => {
-    const stepOrder: Step[] = ["stats", "dateOfBirth", "region", "allergies", "dietary", "activity", "goal", "appleHealth", hasAppleHealth ? "caloriesBurnt" : "skip", "rollover", "notifications", "macros", "premium", isPremium ? "skip" : "premiumUpsell", "loading", "summary"].filter(s => s !== "skip");
+    const stepOrder: Step[] = (["stats", "dateOfBirth", "region", "allergies", "dietary", "activity", "goal", goal !== "maintain" ? "targetWeight" : "skip", goal !== "maintain" ? "weightSpeed" : "skip", "appleHealth", hasAppleHealth ? "caloriesBurnt" : "skip", "rollover", "notifications", "macros", "premium", isPremium ? "skip" : "premiumUpsell", "loading", "summary"] as (Step | "skip")[]).filter(s => s !== "skip") as Step[];
     const currentIndex = stepOrder.indexOf(step);
     if (currentIndex > 0) {
       setStep(stepOrder[currentIndex - 1]);
@@ -868,83 +870,177 @@ export default function Onboarding() {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
 
-            {goal !== "maintain" && (
-              <View style={styles.weightSpeedSection}>
-                <Text style={styles.sectionTitle}>Target Weight</Text>
-                <Text style={styles.sectionSubtitle}>What weight do you want to reach?</Text>
-                
-                <View style={styles.targetWeightInputContainer}>
-                  <TouchableOpacity
-                    style={styles.weightAdjustButton}
-                    onPress={() => {
-                      const decrement = units === "imperial" ? 0.453592 : 0.5;
-                      const newWeight = targetWeightValue - decrement;
-                      if (goal === "lose" && newWeight >= minTargetWeight) {
-                        setTargetWeight(newWeight.toFixed(1));
-                      } else if (goal === "gain" && newWeight > currentWeightKg) {
-                        setTargetWeight(newWeight.toFixed(1));
-                      }
-                    }}
-                  >
-                    <Text style={styles.weightAdjustButtonText}>-</Text>
-                  </TouchableOpacity>
-                  
-                  <View style={styles.targetWeightDisplay}>
-                    <Text style={styles.targetWeightValue}>{getTargetWeightDisplay(targetWeightValue)}</Text>
-                  </View>
-                  
-                  <TouchableOpacity
-                    style={styles.weightAdjustButton}
-                    onPress={() => {
-                      const increment = units === "imperial" ? 0.453592 : 0.5;
-                      const newWeight = targetWeightValue + increment;
-                      if (goal === "lose" && newWeight < currentWeightKg) {
-                        setTargetWeight(newWeight.toFixed(1));
-                      } else if (goal === "gain" && newWeight <= maxTargetWeight) {
-                        setTargetWeight(newWeight.toFixed(1));
-                      }
-                    }}
-                  >
-                    <Text style={styles.weightAdjustButtonText}>+</Text>
-                  </TouchableOpacity>
-                </View>
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep(goal !== "maintain" ? "targetWeight" : "appleHealth")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
 
-                <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Weight Change Speed</Text>
-                <Text style={styles.sectionSubtitle}>How fast do you want to {goal === "lose" ? "lose" : "gain"} weight?</Text>
-                
-                <View style={styles.speedButtonsContainer}>
-                  {[0.25, 0.5, 0.75, 1].map((speed) => (
-                    <TouchableOpacity
-                      key={speed}
-                      style={[
-                        styles.speedButton,
-                        weightSpeed === speed && styles.speedButtonActive,
-                      ]}
-                      onPress={() => setWeightSpeed(speed)}
-                    >
-                      <Text style={[
-                        styles.speedButtonLabel,
-                        weightSpeed === speed && styles.speedButtonLabelActive,
-                      ]}>
-                        {speedLabels[speed as keyof typeof speedLabels]}
-                      </Text>
-                      <Text style={[
-                        styles.speedButtonValue,
-                        weightSpeed === speed && styles.speedButtonValueActive,
-                      ]}>
-                        {speed} kg/week
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+  if (step === "targetWeight") {
+    const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const minTargetWeight = Math.max(40, currentWeightKg - 50);
+    const maxTargetWeight = currentWeightKg + 10;
+    const targetWeightValue = targetWeight ? parseFloat(targetWeight) : currentWeightKg;
 
-                <View style={styles.goalTimeCard}>
-                  <Text style={styles.goalTimeLabel}>Time to reach your target weight</Text>
-                  <Text style={styles.goalTimeValue}>{calculateTimeToGoal(weightSpeed)}</Text>
-                </View>
+    const getTargetWeightDisplay = (kg: number) => {
+      if (units === "imperial") {
+        return `${(kg / 0.453592).toFixed(1)} lbs`;
+      }
+      return `${kg.toFixed(1)} kg`;
+    };
+
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Target Weight</Text>
+          <Text style={styles.subtitle}>What weight do you want to reach?</Text>
+
+          <View style={styles.form}>
+            <View style={styles.targetWeightInputContainer}>
+              <TouchableOpacity
+                style={styles.weightAdjustButton}
+                onPress={() => {
+                  const decrement = units === "imperial" ? 0.453592 : 0.5;
+                  const newWeight = targetWeightValue - decrement;
+                  if (goal === "lose" && newWeight >= minTargetWeight) {
+                    setTargetWeight(newWeight.toFixed(1));
+                  } else if (goal === "gain" && newWeight > currentWeightKg) {
+                    setTargetWeight(newWeight.toFixed(1));
+                  }
+                }}
+              >
+                <Text style={styles.weightAdjustButtonText}>-</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.targetWeightDisplay}>
+                <Text style={styles.targetWeightValue}>{getTargetWeightDisplay(targetWeightValue)}</Text>
               </View>
-            )}
+              
+              <TouchableOpacity
+                style={styles.weightAdjustButton}
+                onPress={() => {
+                  const increment = units === "imperial" ? 0.453592 : 0.5;
+                  const newWeight = targetWeightValue + increment;
+                  if (goal === "lose" && newWeight < currentWeightKg) {
+                    setTargetWeight(newWeight.toFixed(1));
+                  } else if (goal === "gain" && newWeight <= maxTargetWeight) {
+                    setTargetWeight(newWeight.toFixed(1));
+                  }
+                }}
+              >
+                <Text style={styles.weightAdjustButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.targetWeightInfoCard}>
+              <Text style={styles.targetWeightInfoLabel}>Current weight</Text>
+              <Text style={styles.targetWeightInfoValue}>{getTargetWeightDisplay(currentWeightKg)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.infoNote}>All of this can be changed later</Text>
+          {showStepCounter && (
+            <Text style={styles.stepCounterText}>{currentStepNumber} of {TOTAL_STEPS}</Text>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={() => setStep("weightSpeed")}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ArrowRight color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  if (step === "weightSpeed") {
+    const currentWeightKg = units === "imperial" ? parseFloat(weight) * 0.453592 : parseFloat(weight);
+    const targetWeightValue = targetWeight ? parseFloat(targetWeight) : currentWeightKg;
+
+    const speedLabels = {
+      0.25: "Slow",
+      0.5: "Moderate",
+      0.75: "Fast",
+      1: "Very Fast",
+    };
+
+    const calculateTimeToGoal = (speed: number) => {
+      const weeklyKgChange = speed;
+      const targetChange = targetWeightValue - currentWeightKg;
+      if (Math.abs(targetChange) < 0.5) return "Already at target";
+      const weeks = Math.abs(targetChange / weeklyKgChange);
+      const months = Math.round(weeks / 4);
+      return months > 0 ? `${months} month${months !== 1 ? "s" : ""}` : "Less than 1 month";
+    };
+
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ChevronLeft color="#fff" size={18} />
+          </TouchableOpacity>
+          {showProgressBar && (
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${(currentStepNumber / TOTAL_STEPS) * 100}%` }]} />
+            </View>
+          )}
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Weight Change Speed</Text>
+          <Text style={styles.subtitle}>How fast do you want to {goal === "lose" ? "lose" : "gain"} weight?</Text>
+
+          <View style={styles.form}>
+            <View style={styles.speedButtonsContainer}>
+              {[0.25, 0.5, 0.75, 1].map((speed) => (
+                <TouchableOpacity
+                  key={speed}
+                  style={[
+                    styles.speedButton,
+                    weightSpeed === speed && styles.speedButtonActive,
+                  ]}
+                  onPress={() => setWeightSpeed(speed)}
+                >
+                  <Text style={[
+                    styles.speedButtonLabel,
+                    weightSpeed === speed && styles.speedButtonLabelActive,
+                  ]}>
+                    {speedLabels[speed as keyof typeof speedLabels]}
+                  </Text>
+                  <Text style={[
+                    styles.speedButtonValue,
+                    weightSpeed === speed && styles.speedButtonValueActive,
+                  ]}>
+                    {speed} kg/week
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.goalTimeCard}>
+              <Text style={styles.goalTimeLabel}>Time to reach your target weight</Text>
+              <Text style={styles.goalTimeValue}>{calculateTimeToGoal(weightSpeed)}</Text>
+            </View>
           </View>
         </View>
 
@@ -2369,6 +2465,23 @@ const styles = StyleSheet.create({
   goalTimeValue: {
     fontSize: 24,
     fontWeight: "700" as const,
+    color: "#fff",
+  },
+  targetWeightInfoCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+  },
+  targetWeightInfoLabel: {
+    fontSize: 14,
+    color: "#999",
+  },
+  targetWeightInfoValue: {
+    fontSize: 16,
+    fontWeight: "600" as const,
     color: "#fff",
   },
   appleHealthCard: {
